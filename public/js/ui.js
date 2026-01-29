@@ -1448,10 +1448,11 @@ class UI {
         
         // 底池赔率
         if (this.elements.statPotOdds) {
-            const toCall = this.gameState.currentBet - humanPlayer.currentBet;
-            if (toCall > 0 && this.gameState.pot > 0) {
-                const potOdds = ((toCall / (this.gameState.pot + toCall)) * 100).toFixed(1);
-                this.elements.statPotOdds.textContent = `${potOdds}%`;
+            const toCall = (this.gameState.currentBet || 0) - (humanPlayer.currentBet || 0);
+            const pot = this.gameState.pot || 0;
+            if (toCall > 0 && (pot + toCall) > 0) {
+                const potOdds = ((toCall / (pot + toCall)) * 100).toFixed(1);
+                this.elements.statPotOdds.textContent = isNaN(potOdds) ? '--' : `${potOdds}%`;
             } else {
                 this.elements.statPotOdds.textContent = '--';
             }

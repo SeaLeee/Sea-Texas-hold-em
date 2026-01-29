@@ -356,10 +356,10 @@ class OddsCalculator {
      * 翻牌前建议
      */
     getPreflopAdvice(odds, currentBet, chips, position, pot) {
-        const strength = odds.handStrength;
-        const category = odds.handCategory;
-        const callCost = currentBet;
-        const potOdds = callCost > 0 ? pot / callCost : 0;
+        const strength = odds?.handStrength || 0;
+        const category = odds?.handCategory || { level: '未知', color: '#999', description: '等待发牌' };
+        const callCost = currentBet || 0;
+        const potOdds = (callCost > 0 && pot > 0) ? pot / callCost : 0;
 
         let advice = {
             action: '',
@@ -432,10 +432,14 @@ class OddsCalculator {
      * 翻牌后建议
      */
     getPostflopAdvice(odds, currentBet, chips, pot, phase) {
-        const handRank = odds.currentHand.rank;
-        const draws = odds.draws;
-        const winProb = odds.winProbability;
-        const potOdds = currentBet > 0 ? (currentBet / (pot + currentBet)) * 100 : 0;
+        const handRank = odds?.currentHand?.rank || 0;
+        const draws = odds?.draws || { flushDraw: false, straightDraw: false, totalOuts: 0 };
+        const winProb = odds?.winProbability || 0;
+        const safePot = pot || 0;
+        const safeCurrentBet = currentBet || 0;
+        const potOdds = (safeCurrentBet > 0 && (safePot + safeCurrentBet) > 0) 
+            ? (safeCurrentBet / (safePot + safeCurrentBet)) * 100 
+            : 0;
 
         let advice = {
             action: '',
@@ -513,10 +517,11 @@ class OddsCalculator {
                     advice.reason = '赔率不足以追听牌';
                     advice.confidence = 70;
                 }
+                const requiredOdds = draws.totalOuts > 0 ? (1 / (draws.totalOuts * 2 / 100)).toFixed(1) : '∞';
                 advice.details = [
                     draws.flushDraw ? '同花听牌' : '',
                     draws.straightDraw ? '顺子听牌' : '',
-                    `需要${(1 / (draws.totalOuts * 2 / 100)).toFixed(1)}:1赔率`
+                    `需要${requiredOdds}:1赔率`
                 ].filter(d => d);
             } else {
                 advice.action = currentBet > 0 ? '弃牌' : '过牌';
