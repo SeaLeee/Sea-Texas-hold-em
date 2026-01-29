@@ -1,0 +1,341 @@
+/* ===== 扑克牌样式 ===== */
+
+.poker-card {
+    position: relative;
+    width: 70px;
+    height: 98px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6px;
+    cursor: default;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform-style: preserve-3d;
+}
+
+.poker-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.poker-card.small {
+    width: 50px;
+    height: 70px;
+    padding: 4px;
+}
+
+.poker-card.mini {
+    width: 40px;
+    height: 56px;
+    padding: 3px;
+}
+
+/* 牌面颜色 */
+.poker-card.red {
+    color: #e53935;
+}
+
+.poker-card.black {
+    color: #212121;
+}
+
+/* 牌面内容 */
+.card-corner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.card-corner.top {
+    align-self: flex-start;
+}
+
+.card-corner.bottom {
+    align-self: flex-end;
+    transform: rotate(180deg);
+}
+
+.card-rank {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Georgia', serif;
+}
+
+.card-suit-small {
+    font-size: 14px;
+    margin-top: -2px;
+}
+
+.poker-card.small .card-rank {
+    font-size: 12px;
+}
+
+.poker-card.small .card-suit-small {
+    font-size: 10px;
+}
+
+.poker-card.mini .card-rank {
+    font-size: 10px;
+}
+
+.poker-card.mini .card-suit-small {
+    font-size: 8px;
+}
+
+/* 中间大花色 */
+.card-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+}
+
+.poker-card.small .card-center {
+    font-size: 22px;
+}
+
+.poker-card.mini .card-center {
+    font-size: 16px;
+}
+
+/* 牌背面 */
+.poker-card.back {
+    background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #1a237e 100%);
+    border: 3px solid #fff;
+}
+
+.poker-card.back::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.poker-card.back::after {
+    content: '♠♥♣♦';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+}
+
+.poker-card.small.back::after {
+    font-size: 8px;
+}
+
+.poker-card.mini.back::after {
+    font-size: 6px;
+    letter-spacing: 1px;
+}
+
+/* 翻牌动画 */
+.poker-card.flipping {
+    animation: cardFlip 0.6s ease forwards;
+}
+
+@keyframes cardFlip {
+    0% {
+        transform: rotateY(0deg);
+    }
+    50% {
+        transform: rotateY(90deg);
+    }
+    100% {
+        transform: rotateY(0deg);
+    }
+}
+
+/* 发牌动画 */
+.poker-card.dealing {
+    animation: cardDeal 0.4s ease forwards;
+}
+
+@keyframes cardDeal {
+    0% {
+        opacity: 0;
+        transform: translateY(-100px) scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 高亮效果（获胜牌） */
+.poker-card.highlight {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 4px 15px rgba(0, 0, 0, 0.3);
+    border: 2px solid #ffd700;
+}
+
+/* 玩家手牌特殊样式 */
+.player-hand .poker-card {
+    width: 90px;
+    height: 126px;
+}
+
+.player-hand .poker-card .card-rank {
+    font-size: 22px;
+}
+
+.player-hand .poker-card .card-suit-small {
+    font-size: 18px;
+}
+
+.player-hand .poker-card .card-center {
+    font-size: 42px;
+}
+
+/* 公共牌占位符内的牌 */
+.community-cards .poker-card {
+    width: 60px;
+    height: 84px;
+}
+
+.community-cards .poker-card .card-rank {
+    font-size: 14px;
+}
+
+.community-cards .poker-card .card-suit-small {
+    font-size: 12px;
+}
+
+.community-cards .poker-card .card-center {
+    font-size: 28px;
+}
+
+/* 花色符号 */
+.suit-spade::before { content: '♠'; }
+.suit-heart::before { content: '♥'; }
+.suit-diamond::before { content: '♦'; }
+.suit-club::before { content: '♣'; }
+
+/* 卡牌容器动画 */
+.cards-container {
+    perspective: 1000px;
+}
+
+/* 悬停放大效果 */
+.poker-card.hoverable:hover {
+    transform: translateY(-10px) scale(1.05);
+    z-index: 10;
+}
+
+/* 选中效果 */
+.poker-card.selected {
+    transform: translateY(-15px);
+    box-shadow: 0 10px 30px rgba(33, 150, 243, 0.5);
+    border: 2px solid #2196f3;
+}
+
+/* 禁用效果 */
+.poker-card.disabled {
+    opacity: 0.5;
+    filter: grayscale(50%);
+    pointer-events: none;
+}
+
+/* 结果展示中的牌 */
+.result-cards {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.result-cards .poker-card {
+    width: 45px;
+    height: 63px;
+    padding: 3px;
+}
+
+.result-cards .poker-card .card-rank {
+    font-size: 11px;
+}
+
+.result-cards .poker-card .card-suit-small {
+    font-size: 9px;
+}
+
+.result-cards .poker-card .card-center {
+    font-size: 18px;
+}
+
+/* 牌堆效果 */
+.deck-stack {
+    position: relative;
+    width: 70px;
+    height: 98px;
+}
+
+.deck-stack .poker-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.deck-stack .poker-card:nth-child(1) { transform: translate(0, 0); }
+.deck-stack .poker-card:nth-child(2) { transform: translate(2px, 2px); }
+.deck-stack .poker-card:nth-child(3) { transform: translate(4px, 4px); }
+.deck-stack .poker-card:nth-child(4) { transform: translate(6px, 6px); }
+.deck-stack .poker-card:nth-child(5) { transform: translate(8px, 8px); }
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .player-hand .poker-card {
+        width: 70px;
+        height: 98px;
+    }
+    
+    .player-hand .poker-card .card-rank {
+        font-size: 16px;
+    }
+    
+    .player-hand .poker-card .card-suit-small {
+        font-size: 14px;
+    }
+    
+    .player-hand .poker-card .card-center {
+        font-size: 32px;
+    }
+    
+    .community-cards .poker-card {
+        width: 50px;
+        height: 70px;
+    }
+    
+    .community-cards .poker-card .card-rank {
+        font-size: 12px;
+    }
+    
+    .community-cards .poker-card .card-suit-small {
+        font-size: 10px;
+    }
+    
+    .community-cards .poker-card .card-center {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 480px) {
+    .player-hand .poker-card {
+        width: 55px;
+        height: 77px;
+    }
+    
+    .community-cards .poker-card {
+        width: 40px;
+        height: 56px;
+    }
+}

@@ -1,0 +1,794 @@
+/**
+ * UI管理器 - 处理界面渲染和用户交互
+ */
+class UI {
+    constructor() {
+        // DOM元素缓存
+        this.elements = {};
+        this.cacheElements();
+        
+        // 当前游戏状态引用
+        this.gameState = null;
+        
+        // 下注滑块状态
+        this.isRaiseMode = false;
+        this.raiseAmount = 0;
+    }
+
+    /**
+     * 缓存DOM元素
+     */
+    cacheElements() {
+        this.elements = {
+            // 屏幕
+            menuScreen: document.getElementById('menu-screen'),
+            gameScreen: document.getElementById('game-screen'),
+            
+            // 菜单元素
+            startGameBtn: document.getElementById('start-game-btn'),
+            rulesBtn: document.getElementById('rules-btn'),
+            difficultyBtns: document.querySelectorAll('.diff-btn'),
+            playerCountBtns: document.querySelectorAll('.count-btn'),
+            chipsBtns: document.querySelectorAll('.chips-btn'),
+            blindsBtns: document.querySelectorAll('.blinds-btn'),
+            
+            // 模态框
+            rulesModal: document.getElementById('rules-modal'),
+            resultModal: document.getElementById('result-modal'),
+            gameoverModal: document.getElementById('gameover-modal'),
+            
+            // 游戏区域
+            potAmount: document.getElementById('pot-amount'),
+            currentBlinds: document.getElementById('current-blinds'),
+            phaseIndicator: document.querySelector('.phase-indicator'),
+            communityCards: document.getElementById('community-cards'),
+            playersContainer: document.getElementById('players-container'),
+            
+            // 玩家控制
+            playerHand: document.getElementById('player-hand'),
+            playerChipsDisplay: document.getElementById('player-chips-display'),
+            playerStatus: document.getElementById('player-status'),
+            
+            // 操作按钮
+            foldBtn: document.getElementById('fold-btn'),
+            checkCallBtn: document.getElementById('check-call-btn'),
+            raiseBtn: document.getElementById('raise-btn'),
+            allinBtn: document.getElementById('allin-btn'),
+            
+            // 下注滑块
+            betSliderContainer: document.getElementById('bet-slider-container'),
+            betSlider: document.getElementById('bet-slider'),
+            betAmountInput: document.getElementById('bet-amount-input'),
+            presetBtns: document.querySelectorAll('.preset-btn'),
+            
+            // 结果
+            resultTitle: document.getElementById('result-title'),
+            resultDetails: document.getElementById('result-details'),
+            nextRoundBtn: document.getElementById('next-round-btn'),
+            
+            // 游戏结束
+            gameoverTitle: document.getElementById('gameover-title'),
+            gameoverDetails: document.getElementById('gameover-details'),
+            restartBtn: document.getElementById('restart-btn'),
+            backMenuBtn: document.getElementById('back-menu-btn'),
+            
+            // 日志
+            gameLog: document.getElementById('game-log'),
+            logContent: document.getElementById('log-content'),
+            toggleLogBtn: document.getElementById('toggle-log'),
+            
+            // 菜单按钮
+            menuBtn: document.getElementById('menu-btn')
+        };
+    }
+
+    /**
+     * 初始化UI事件监听
+     * @param {Object} callbacks - 回调函数对象
+     */
+    initEventListeners(callbacks) {
+        // 开始游戏按钮
+        this.elements.startGameBtn.addEventListener('click', () => {
+            const settings = this.getMenuSettings();
+            callbacks.onStartGame(settings);
+        });
+
+        // 规则按钮
+        this.elements.rulesBtn.addEventListener('click', () => {
+            this.showModal('rulesModal');
+        });
+
+        // 关闭模态框
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.hideAllModals();
+            });
+        });
+
+        // 点击模态框外部关闭
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.hideAllModals();
+                }
+            });
+        });
+
+        // 菜单选项按钮组
+        this.setupButtonGroup('.diff-btn', 'data-difficulty');
+        this.setupButtonGroup('.count-btn', 'data-count');
+        this.setupButtonGroup('.chips-btn', 'data-chips');
+        this.setupButtonGroup('.blinds-btn', 'data-blinds');
+
+        // 游戏操作按钮
+        this.elements.foldBtn.addEventListener('click', () => {
+            callbacks.onPlayerAction(ACTIONS.FOLD);
+        });
+
+        this.elements.checkCallBtn.addEventListener('click', () => {
+            const action = this.elements.checkCallBtn.dataset.action;
+            callbacks.onPlayerAction(action);
+        });
+
+        this.elements.raiseBtn.addEventListener('click', () => {
+            if (this.isRaiseMode) {
+                callbacks.onPlayerAction(ACTIONS.RAISE, this.raiseAmount);
+                this.hideRaiseSlider();
+            } else {
+                this.showRaiseSlider();
+            }
+        });
+
+        this.elements.allinBtn.addEventListener('click', () => {
+            callbacks.onPlayerAction(ACTIONS.ALLIN);
+        });
+
+        // 下注滑块
+        this.elements.betSlider.addEventListener('input', (e) => {
+            this.updateRaiseAmount(parseInt(e.target.value));
+        });
+
+        this.elements.betAmountInput.addEventListener('change', (e) => {
+            const value = parseInt(e.target.value) || 0;
+            this.updateRaiseAmount(value);
+            this.elements.betSlider.value = value;
+        });
+
+        // 预设下注按钮
+        this.elements.presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const multiplier = parseFloat(btn.dataset.multiplier);
+                const amount = Math.floor(this.gameState.pot * multiplier) + this.gameState.currentBet;
+                this.updateRaiseAmount(amount);
+                this.elements.betSlider.value = amount;
+            });
+        });
+
+        // 下一轮按钮
+        this.elements.nextRoundBtn.addEventListener('click', () => {
+            this.hideModal('resultModal');
+            callbacks.onNextRound();
+        });
+
+        // 重新开始按钮
+        this.elements.restartBtn.addEventListener('click', () => {
+            this.hideModal('gameoverModal');
+            callbacks.onRestart();
+        });
+
+        // 返回菜单按钮
+        this.elements.backMenuBtn.addEventListener('click', () => {
+            this.hideModal('gameoverModal');
+            callbacks.onBackToMenu();
+        });
+
+        // 菜单按钮
+        this.elements.menuBtn.addEventListener('click', () => {
+            callbacks.onBackToMenu();
+        });
+
+        // 日志折叠
+        this.elements.toggleLogBtn.addEventListener('click', () => {
+            const content = this.elements.logContent;
+            const isHidden = content.style.display === 'none';
+            content.style.display = isHidden ? 'block' : 'none';
+            this.elements.toggleLogBtn.textContent = isHidden ? '−' : '+';
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (this.elements.gameScreen.classList.contains('active') && 
+                this.gameState && 
+                this.gameState.phase !== GAME_PHASES.WAITING &&
+                this.gameState.phase !== GAME_PHASES.SHOWDOWN) {
+                
+                const key = e.key.toLowerCase();
+                
+                if (key === KEYBOARD_SHORTCUTS.FOLD && !this.elements.foldBtn.disabled) {
+                    callbacks.onPlayerAction(ACTIONS.FOLD);
+                } else if (key === KEYBOARD_SHORTCUTS.CHECK_CALL && !this.elements.checkCallBtn.disabled) {
+                    const action = this.elements.checkCallBtn.dataset.action;
+                    callbacks.onPlayerAction(action);
+                } else if (key === KEYBOARD_SHORTCUTS.RAISE && !this.elements.raiseBtn.disabled) {
+                    if (this.isRaiseMode) {
+                        callbacks.onPlayerAction(ACTIONS.RAISE, this.raiseAmount);
+                        this.hideRaiseSlider();
+                    } else {
+                        this.showRaiseSlider();
+                    }
+                } else if (key === KEYBOARD_SHORTCUTS.ALLIN && !this.elements.allinBtn.disabled) {
+                    callbacks.onPlayerAction(ACTIONS.ALLIN);
+                } else if (key === 'escape' && this.isRaiseMode) {
+                    this.hideRaiseSlider();
+                }
+            }
+        });
+    }
+
+    /**
+     * 设置按钮组
+     * @param {string} selector - 选择器
+     * @param {string} dataAttr - 数据属性
+     */
+    setupButtonGroup(selector, dataAttr) {
+        document.querySelectorAll(selector).forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll(selector).forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    }
+
+    /**
+     * 获取菜单设置
+     * @returns {Object}
+     */
+    getMenuSettings() {
+        const difficulty = document.querySelector('.diff-btn.active')?.dataset.difficulty || AI_DIFFICULTY.MEDIUM;
+        const playerCount = parseInt(document.querySelector('.count-btn.active')?.dataset.count) || 4;
+        const startingChips = parseInt(document.querySelector('.chips-btn.active')?.dataset.chips) || 5000;
+        const blindsStr = document.querySelector('.blinds-btn.active')?.dataset.blinds || '10/20';
+        const [smallBlind, bigBlind] = blindsStr.split('/').map(Number);
+
+        return {
+            difficulty,
+            playerCount,
+            startingChips,
+            smallBlind,
+            bigBlind
+        };
+    }
+
+    /**
+     * 切换到游戏界面
+     */
+    showGameScreen() {
+        this.elements.menuScreen.classList.remove('active');
+        this.elements.gameScreen.classList.add('active');
+        this.elements.gameLog.classList.add('active');
+        this.clearLog();
+    }
+
+    /**
+     * 切换到菜单界面
+     */
+    showMenuScreen() {
+        this.elements.gameScreen.classList.remove('active');
+        this.elements.menuScreen.classList.add('active');
+        this.elements.gameLog.classList.remove('active');
+    }
+
+    /**
+     * 更新游戏界面
+     * @param {Object} state - 游戏状态
+     */
+    updateGameUI(state) {
+        this.gameState = state;
+
+        // 更新顶部信息
+        this.elements.potAmount.textContent = this.formatNumber(state.pot);
+        this.elements.phaseIndicator.textContent = state.phaseName;
+        this.elements.currentBlinds.textContent = `${state.settings.smallBlind}/${state.settings.bigBlind}`;
+
+        // 更新公共牌
+        this.renderCommunityCards(state.communityCards);
+
+        // 更新玩家区域
+        this.renderPlayers(state);
+
+        // 更新人类玩家区域
+        this.updatePlayerControls(state);
+    }
+
+    /**
+     * 渲染公共牌
+     * @param {Card[]} cards - 公共牌数组
+     */
+    renderCommunityCards(cards) {
+        this.elements.communityCards.innerHTML = '';
+
+        // 创建5个位置
+        for (let i = 0; i < 5; i++) {
+            if (i < cards.length) {
+                const cardEl = cards[i].toHTML('normal');
+                cardEl.classList.add('dealing');
+                cardEl.style.animationDelay = `${i * 0.1}s`;
+                this.elements.communityCards.appendChild(cardEl);
+            } else {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'card-placeholder';
+                this.elements.communityCards.appendChild(placeholder);
+            }
+        }
+    }
+
+    /**
+     * 渲染玩家
+     * @param {Object} state - 游戏状态
+     */
+    renderPlayers(state) {
+        this.elements.playersContainer.innerHTML = '';
+
+        const positions = this.getPlayerPositions(state.players.length);
+
+        state.players.forEach((player, index) => {
+            const seat = this.createPlayerSeat(player, index, state, positions[index]);
+            this.elements.playersContainer.appendChild(seat);
+        });
+    }
+
+    /**
+     * 获取玩家位置配置
+     * @param {number} count - 玩家数量
+     * @returns {Array}
+     */
+    getPlayerPositions(count) {
+        const positions = {
+            2: [
+                { bottom: '-5%', left: '50%', transform: 'translate(-50%, 0)' },
+                { top: '-5%', left: '50%', transform: 'translate(-50%, 0)' }
+            ],
+            3: [
+                { bottom: '-5%', left: '50%', transform: 'translate(-50%, 0)' },
+                { top: '30%', left: '5%', transform: 'translate(0, -50%)' },
+                { top: '30%', right: '5%', left: 'auto', transform: 'translate(0, -50%)' }
+            ],
+            4: [
+                { bottom: '-5%', left: '50%', transform: 'translate(-50%, 0)' },
+                { bottom: '20%', left: '8%', transform: 'translate(0, 0)' },
+                { top: '-5%', left: '50%', transform: 'translate(-50%, 0)' },
+                { bottom: '20%', right: '8%', left: 'auto', transform: 'translate(0, 0)' }
+            ],
+            5: [
+                { bottom: '-5%', left: '50%', transform: 'translate(-50%, 0)' },
+                { bottom: '15%', left: '8%', transform: 'translate(0, 0)' },
+                { top: '15%', left: '15%', transform: 'translate(0, 0)' },
+                { top: '15%', right: '15%', left: 'auto', transform: 'translate(0, 0)' },
+                { bottom: '15%', right: '8%', left: 'auto', transform: 'translate(0, 0)' }
+            ],
+            6: [
+                { bottom: '-5%', left: '50%', transform: 'translate(-50%, 0)' },
+                { bottom: '10%', left: '5%', transform: 'translate(0, 0)' },
+                { top: '25%', left: '5%', transform: 'translate(0, 0)' },
+                { top: '-5%', left: '50%', transform: 'translate(-50%, 0)' },
+                { top: '25%', right: '5%', left: 'auto', transform: 'translate(0, 0)' },
+                { bottom: '10%', right: '5%', left: 'auto', transform: 'translate(0, 0)' }
+            ]
+        };
+
+        return positions[count] || positions[4];
+    }
+
+    /**
+     * 创建玩家座位元素
+     * @param {Player} player - 玩家
+     * @param {number} index - 索引
+     * @param {Object} state - 游戏状态
+     * @param {Object} position - 位置样式
+     * @returns {HTMLElement}
+     */
+    createPlayerSeat(player, index, state, position) {
+        const seat = document.createElement('div');
+        seat.className = 'player-seat';
+        seat.id = `player-seat-${player.id}`;
+
+        // 应用位置
+        Object.assign(seat.style, position);
+
+        // 状态类
+        if (index === state.currentPlayerIndex && player.canAct()) {
+            seat.classList.add('active');
+        }
+        if (player.status === PLAYER_STATUS.FOLDED) {
+            seat.classList.add('folded');
+        }
+
+        // 头像
+        const avatar = document.createElement('div');
+        avatar.className = 'player-avatar';
+        avatar.textContent = player.avatar;
+        if (index === state.currentPlayerIndex && player.canAct()) {
+            avatar.classList.add('active-glow');
+        }
+
+        // 手牌
+        const cards = document.createElement('div');
+        cards.className = 'player-cards';
+        if (player.holeCards.length > 0) {
+            player.holeCards.forEach(card => {
+                const cardEl = card.toHTML('mini', !player.isHuman && state.phase !== GAME_PHASES.SHOWDOWN);
+                cards.appendChild(cardEl);
+            });
+        }
+
+        // 信息栏
+        const info = document.createElement('div');
+        info.className = 'player-info';
+        
+        const name = document.createElement('div');
+        name.className = 'player-name';
+        name.textContent = player.name;
+        
+        const posText = player.getPositionText();
+        if (posText) {
+            const badge = document.createElement('span');
+            badge.className = 'position-badge';
+            badge.textContent = ` (${posText})`;
+            badge.style.fontSize = '0.7em';
+            badge.style.opacity = '0.7';
+            name.appendChild(badge);
+        }
+
+        const chips = document.createElement('div');
+        chips.className = 'player-chips-display';
+        chips.textContent = `💰 ${this.formatNumber(player.chips)}`;
+
+        info.appendChild(name);
+        info.appendChild(chips);
+
+        // 当前下注显示
+        if (player.currentBet > 0) {
+            const betDisplay = document.createElement('div');
+            betDisplay.className = 'player-bet-display';
+            betDisplay.textContent = `下注: ${this.formatNumber(player.currentBet)}`;
+            betDisplay.style.top = 'auto';
+            betDisplay.style.bottom = '-25px';
+            seat.appendChild(betDisplay);
+        }
+
+        // 操作指示器
+        if (player.lastAction && state.phase !== GAME_PHASES.SHOWDOWN) {
+            const actionIndicator = document.createElement('div');
+            actionIndicator.className = 'player-action-indicator';
+            actionIndicator.textContent = ACTION_NAMES[player.lastAction] || '';
+            
+            // 根据操作类型设置颜色
+            switch (player.lastAction) {
+                case ACTIONS.FOLD:
+                    actionIndicator.style.background = '#666';
+                    break;
+                case ACTIONS.RAISE:
+                case ACTIONS.ALLIN:
+                    actionIndicator.style.background = '#f44336';
+                    break;
+                case ACTIONS.CALL:
+                    actionIndicator.style.background = '#2196f3';
+                    break;
+                default:
+                    actionIndicator.style.background = '#4caf50';
+            }
+            
+            seat.appendChild(actionIndicator);
+        }
+
+        // 状态显示
+        const statusText = player.getStatusText();
+        if (statusText) {
+            const status = document.createElement('div');
+            status.className = 'player-action-indicator';
+            status.textContent = statusText;
+            status.style.background = player.status === PLAYER_STATUS.ALLIN ? '#f44336' : '#666';
+            seat.appendChild(status);
+        }
+
+        // 庄家按钮
+        if (player.isDealer) {
+            const dealerBtn = document.createElement('div');
+            dealerBtn.className = 'dealer-button';
+            dealerBtn.textContent = 'D';
+            dealerBtn.style.position = 'absolute';
+            dealerBtn.style.bottom = '-10px';
+            dealerBtn.style.right = '-10px';
+            avatar.appendChild(dealerBtn);
+        }
+
+        seat.appendChild(cards);
+        seat.appendChild(avatar);
+        seat.appendChild(info);
+
+        return seat;
+    }
+
+    /**
+     * 更新玩家控制区域
+     * @param {Object} state - 游戏状态
+     */
+    updatePlayerControls(state) {
+        const humanPlayer = state.players.find(p => p.isHuman);
+        if (!humanPlayer) return;
+
+        // 更新手牌
+        this.elements.playerHand.innerHTML = '';
+        humanPlayer.holeCards.forEach(card => {
+            card.reveal();
+            const cardEl = card.toHTML('normal');
+            this.elements.playerHand.appendChild(cardEl);
+        });
+
+        // 更新筹码显示
+        this.elements.playerChipsDisplay.textContent = this.formatNumber(humanPlayer.chips);
+
+        // 更新状态
+        const isMyTurn = state.players[state.currentPlayerIndex]?.isHuman && 
+                         state.phase !== GAME_PHASES.WAITING &&
+                         state.phase !== GAME_PHASES.SHOWDOWN;
+        
+        if (isMyTurn) {
+            this.elements.playerStatus.textContent = '轮到你行动！';
+            this.elements.playerStatus.classList.add('blink');
+        } else if (state.phase === GAME_PHASES.WAITING) {
+            this.elements.playerStatus.textContent = '等待开始...';
+            this.elements.playerStatus.classList.remove('blink');
+        } else if (state.phase === GAME_PHASES.SHOWDOWN) {
+            this.elements.playerStatus.textContent = '摊牌';
+            this.elements.playerStatus.classList.remove('blink');
+        } else {
+            this.elements.playerStatus.textContent = '等待其他玩家...';
+            this.elements.playerStatus.classList.remove('blink');
+        }
+
+        // 更新操作按钮
+        this.updateActionButtons(state, humanPlayer, isMyTurn);
+    }
+
+    /**
+     * 更新操作按钮状态
+     * @param {Object} state - 游戏状态
+     * @param {Player} player - 人类玩家
+     * @param {boolean} isMyTurn - 是否轮到玩家
+     */
+    updateActionButtons(state, player, isMyTurn) {
+        const actions = player.getAvailableActions(state.currentBet, state.minRaise);
+
+        // 禁用所有按钮（如果不是玩家回合）
+        const disabled = !isMyTurn || !player.canAct();
+
+        // 弃牌按钮
+        this.elements.foldBtn.disabled = disabled || !actions[ACTIONS.FOLD];
+
+        // 过牌/跟注按钮
+        if (actions[ACTIONS.CHECK]) {
+            this.elements.checkCallBtn.querySelector('.btn-text').textContent = '过牌';
+            this.elements.checkCallBtn.querySelector('.btn-amount').textContent = '';
+            this.elements.checkCallBtn.dataset.action = ACTIONS.CHECK;
+            this.elements.checkCallBtn.disabled = disabled;
+        } else if (actions[ACTIONS.CALL]) {
+            this.elements.checkCallBtn.querySelector('.btn-text').textContent = '跟注';
+            this.elements.checkCallBtn.querySelector('.btn-amount').textContent = this.formatNumber(actions[ACTIONS.CALL]);
+            this.elements.checkCallBtn.dataset.action = ACTIONS.CALL;
+            this.elements.checkCallBtn.disabled = disabled;
+        } else {
+            this.elements.checkCallBtn.disabled = true;
+        }
+
+        // 加注按钮
+        if (actions[ACTIONS.RAISE]) {
+            this.elements.raiseBtn.disabled = disabled;
+            this.elements.raiseBtn.querySelector('.btn-text').textContent = '加注';
+            
+            // 更新滑块范围
+            this.elements.betSlider.min = actions[ACTIONS.RAISE].min;
+            this.elements.betSlider.max = actions[ACTIONS.RAISE].max;
+            this.elements.betSlider.value = actions[ACTIONS.RAISE].min;
+            this.raiseAmount = actions[ACTIONS.RAISE].min;
+        } else {
+            this.elements.raiseBtn.disabled = true;
+        }
+
+        // 全押按钮
+        if (actions[ACTIONS.ALLIN]) {
+            this.elements.allinBtn.disabled = disabled;
+        } else {
+            this.elements.allinBtn.disabled = true;
+        }
+
+        // 隐藏加注滑块
+        if (disabled) {
+            this.hideRaiseSlider();
+        }
+    }
+
+    /**
+     * 显示加注滑块
+     */
+    showRaiseSlider() {
+        this.isRaiseMode = true;
+        this.elements.betSliderContainer.classList.add('active');
+        this.elements.raiseBtn.querySelector('.btn-text').textContent = '确认加注';
+        this.updateRaiseAmount(parseInt(this.elements.betSlider.value));
+    }
+
+    /**
+     * 隐藏加注滑块
+     */
+    hideRaiseSlider() {
+        this.isRaiseMode = false;
+        this.elements.betSliderContainer.classList.remove('active');
+        this.elements.raiseBtn.querySelector('.btn-text').textContent = '加注';
+    }
+
+    /**
+     * 更新加注金额
+     * @param {number} amount - 金额
+     */
+    updateRaiseAmount(amount) {
+        const min = parseInt(this.elements.betSlider.min);
+        const max = parseInt(this.elements.betSlider.max);
+        this.raiseAmount = Math.max(min, Math.min(max, amount));
+        this.elements.betAmountInput.value = this.raiseAmount;
+        this.elements.raiseBtn.querySelector('.btn-amount').textContent = this.formatNumber(this.raiseAmount);
+    }
+
+    /**
+     * 显示回合结果
+     * @param {Object} result - 结果对象
+     */
+    showRoundResult(result) {
+        const { winners, isTie, reason } = result;
+
+        let title = '';
+        if (reason === 'fold') {
+            title = `${winners[0].player.name} 获胜！`;
+        } else if (isTie) {
+            title = '平局！';
+        } else {
+            const winner = winners[0];
+            title = winner.player.isHuman ? '🎉 你赢了！' : `${winner.player.name} 获胜`;
+        }
+
+        this.elements.resultTitle.textContent = title;
+
+        // 生成详情
+        let detailsHTML = '';
+        
+        if (result.allResults) {
+            for (const r of result.allResults) {
+                const isWinner = winners.some(w => w.player.id === r.player.id);
+                detailsHTML += `
+                    <div class="result-player ${isWinner ? 'winner' : ''}">
+                        <span class="result-player-name">${r.player.name}</span>
+                        <span class="result-player-hand">${r.evaluation ? r.evaluation.description : ''}</span>
+                        <span class="result-player-winnings">${isWinner ? '+' + this.formatNumber(r.winAmount || 0) : ''}</span>
+                    </div>
+                `;
+            }
+        } else {
+            for (const w of winners) {
+                detailsHTML += `
+                    <div class="result-player winner">
+                        <span class="result-player-name">${w.player.name}</span>
+                        <span class="result-player-hand">${reason === 'fold' ? '其他玩家弃牌' : ''}</span>
+                        <span class="result-player-winnings">+${this.formatNumber(result.winAmount || 0)}</span>
+                    </div>
+                `;
+            }
+        }
+
+        this.elements.resultDetails.innerHTML = detailsHTML;
+        this.showModal('resultModal');
+    }
+
+    /**
+     * 显示游戏结束
+     * @param {Object} result - 结果对象
+     */
+    showGameOver(result) {
+        const { winner, rankings, totalRounds } = result;
+
+        const title = winner.isHuman ? '🏆 恭喜你获得最终胜利！' : `游戏结束 - ${winner.name} 获胜`;
+        this.elements.gameoverTitle.textContent = title;
+
+        let detailsHTML = `<p>共进行了 ${totalRounds} 轮</p><div class="rankings">`;
+        
+        rankings.forEach((player, index) => {
+            detailsHTML += `
+                <div class="result-player ${index === 0 ? 'winner' : ''}">
+                    <span class="result-player-name">#${index + 1} ${player.name}</span>
+                    <span class="result-player-winnings">💰 ${this.formatNumber(player.chips)}</span>
+                </div>
+            `;
+        });
+
+        detailsHTML += '</div>';
+        this.elements.gameoverDetails.innerHTML = detailsHTML;
+        this.showModal('gameoverModal');
+    }
+
+    /**
+     * 显示模态框
+     * @param {string} modalKey - 模态框键名
+     */
+    showModal(modalKey) {
+        this.elements[modalKey].classList.add('active');
+    }
+
+    /**
+     * 隐藏模态框
+     * @param {string} modalKey - 模态框键名
+     */
+    hideModal(modalKey) {
+        this.elements[modalKey].classList.remove('active');
+    }
+
+    /**
+     * 隐藏所有模态框
+     */
+    hideAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.classList.remove('active');
+        });
+    }
+
+    /**
+     * 添加日志条目
+     * @param {string} message - 日志消息
+     */
+    addLog(message) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry fade-in';
+        
+        const time = new Date().toLocaleTimeString('zh-CN', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        entry.innerHTML = `<span class="log-time">${time}</span>${message}`;
+        this.elements.logContent.insertBefore(entry, this.elements.logContent.firstChild);
+
+        // 限制日志条数
+        while (this.elements.logContent.children.length > 50) {
+            this.elements.logContent.removeChild(this.elements.logContent.lastChild);
+        }
+    }
+
+    /**
+     * 清空日志
+     */
+    clearLog() {
+        this.elements.logContent.innerHTML = '';
+    }
+
+    /**
+     * 格式化数字
+     * @param {number} num - 数字
+     * @returns {string}
+     */
+    formatNumber(num) {
+        return num.toLocaleString('zh-CN');
+    }
+
+    /**
+     * 高亮赢家
+     * @param {number[]} winnerIds - 赢家ID数组
+     */
+    highlightWinners(winnerIds) {
+        winnerIds.forEach(id => {
+            const seat = document.getElementById(`player-seat-${id}`);
+            if (seat) {
+                seat.classList.add('winner');
+                seat.classList.add('win-celebrate');
+            }
+        });
+    }
+}
