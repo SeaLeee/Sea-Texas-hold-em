@@ -67,13 +67,14 @@
                 </div>
                 
                 <div class="option-group buddy-group">
-                    <label>🎭 选择小伙伴 <span class="buddy-hint">(可选，点击选中/取消)</span></label>
+                    <label>🎭 选择小伙伴 <span class="buddy-hint">(可选，点击选中/取消，最多选择AI数量-1个)</span></label>
                     <div class="buddy-selector" id="buddy-selector">
                         <div class="buddy-card" data-buddy="hailin">
                             <div class="buddy-avatar">🦈</div>
                             <div class="buddy-info">
                                 <div class="buddy-name">海林</div>
                                 <div class="buddy-style">激进诈唬型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🦁</span> 狮子型</div>
                             </div>
                             <div class="buddy-desc">喜欢诈唬直接干</div>
                         </div>
@@ -82,6 +83,7 @@
                             <div class="buddy-info">
                                 <div class="buddy-name">达达</div>
                                 <div class="buddy-style">装逼激进型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🐅</span> 老虎型</div>
                             </div>
                             <div class="buddy-desc">喜欢装逼直接干</div>
                         </div>
@@ -90,6 +92,7 @@
                             <div class="buddy-info">
                                 <div class="buddy-name">一花</div>
                                 <div class="buddy-style">均衡高手型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🦊</span> 狐狸型</div>
                             </div>
                             <div class="buddy-desc">高手，打法均衡有章法</div>
                         </div>
@@ -98,12 +101,67 @@
                             <div class="buddy-info">
                                 <div class="buddy-name">大海</div>
                                 <div class="buddy-style">稳健保守型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🐢</span> 乌龟型</div>
                             </div>
                             <div class="buddy-desc">稳重型选手，很少冒险</div>
                         </div>
+                        <div class="buddy-card" data-buddy="xiaomei">
+                            <div class="buddy-avatar">🦋</div>
+                            <div class="buddy-info">
+                                <div class="buddy-name">小美</div>
+                                <div class="buddy-style">灵活多变型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🦊</span> 狐狸型</div>
+                            </div>
+                            <div class="buddy-desc">新手玩家，但学习很快</div>
+                        </div>
+                        <div class="buddy-card" data-buddy="laowang">
+                            <div class="buddy-avatar">🦉</div>
+                            <div class="buddy-info">
+                                <div class="buddy-name">老王</div>
+                                <div class="buddy-style">老练稳重型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🐢</span> 乌龟型</div>
+                            </div>
+                            <div class="buddy-desc">经验丰富的老牌手</div>
+                        </div>
+                        <div class="buddy-card" data-buddy="aqiang">
+                            <div class="buddy-avatar">🐺</div>
+                            <div class="buddy-info">
+                                <div class="buddy-name">阿强</div>
+                                <div class="buddy-style">狼性进攻型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🐅</span> 老虎型</div>
+                            </div>
+                            <div class="buddy-desc">狼性十足的竞技选手</div>
+                        </div>
+                        <div class="buddy-card" data-buddy="xiaoyu">
+                            <div class="buddy-avatar">🐟</div>
+                            <div class="buddy-info">
+                                <div class="buddy-name">小鱼</div>
+                                <div class="buddy-style">胆小保守型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🐢</span> 乌龟型</div>
+                            </div>
+                            <div class="buddy-desc">胆小谨慎的小鱼儿</div>
+                        </div>
+                        <div class="buddy-card" data-buddy="dapeng">
+                            <div class="buddy-avatar">🦅</div>
+                            <div class="buddy-info">
+                                <div class="buddy-name">大鹏</div>
+                                <div class="buddy-style">高空俯冲型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🦁</span> 狮子型</div>
+                            </div>
+                            <div class="buddy-desc">志在高飞的疯狂玩家</div>
+                        </div>
+                        <div class="buddy-card" data-buddy="miaomiao">
+                            <div class="buddy-avatar">🐱</div>
+                            <div class="buddy-info">
+                                <div class="buddy-name">喵喵</div>
+                                <div class="buddy-style">伺机而动型</div>
+                                <div class="buddy-personality"><span class="personality-animal">🦊</span> 狐狸型</div>
+                            </div>
+                            <div class="buddy-desc">慵懒但精明的玩家</div>
+                        </div>
                     </div>
                     <div class="buddy-selected-info" id="buddy-selected-info">
-                        已选择: <span id="selected-count">0</span> 位小伙伴
+                        已选择: <span id="selected-count">0</span> 位小伙伴 <span class="buddy-limit">(最多可选 <span id="max-buddies">3</span> 位)</span>
                     </div>
                 </div>
             </div>

@@ -111,9 +111,9 @@ class GameManager {
      * 初始化粒子系统
      */
     initParticleSystem() {
-        const canvas = document.getElementById('particle-canvas');
-        if (canvas && typeof ParticleSystem !== 'undefined') {
-            this.particleSystem = new ParticleSystem(canvas);
+        if (typeof ParticleSystem !== 'undefined') {
+            // ParticleSystem 构造函数期望的是 canvas ID 字符串
+            this.particleSystem = new ParticleSystem('particle-canvas');
         }
     }
 
@@ -296,6 +296,18 @@ class GameManager {
      * @param {Player} player - AI玩家
      */
     processAITurn(player) {
+        // 安全检查：确保游戏仍在进行中且玩家可以行动
+        if (this.phase === GAME_PHASES.WAITING || 
+            this.phase === GAME_PHASES.SHOWDOWN ||
+            !player.canAct()) {
+            return;
+        }
+        
+        // 确保当前是这个玩家的回合
+        if (this.players[this.currentPlayerIndex] !== player) {
+            return;
+        }
+        
         const gameState = {
             communityCards: this.communityCards,
             currentBet: this.currentBet,

@@ -177,6 +177,14 @@ const AI_NAMES = [
     'Jack', 'Mike', 'Tom', 'Alex'
 ];
 
+// 性格动物形象映射
+const PERSONALITY_ANIMALS = {
+    [AI_PERSONALITY.CONSERVATIVE]: { emoji: '🐢', label: '乌龟', desc: '稳如老龟，耐心等待' },
+    [AI_PERSONALITY.BALANCED]: { emoji: '🦊', label: '狐狸', desc: '狡猾如狐，伺机而动' },
+    [AI_PERSONALITY.AGGRESSIVE]: { emoji: '🐅', label: '老虎', desc: '凶猛如虎，步步紧逼' },
+    [AI_PERSONALITY.MANIAC]: { emoji: '🦁', label: '狮子', desc: '狂野如狮，不计后果' }
+};
+
 // 预设小伙伴角色
 const PRESET_BUDDIES = {
     hailin: {
@@ -184,6 +192,7 @@ const PRESET_BUDDIES = {
         name: '海林',
         avatar: '🦈',
         personality: AI_PERSONALITY.MANIAC,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.MANIAC],
         difficulty: AI_DIFFICULTY.MEDIUM,
         description: '喜欢诈唬直接干的选手',
         style: '激进诈唬型',
@@ -201,6 +210,7 @@ const PRESET_BUDDIES = {
         name: '达达',
         avatar: '🐂',
         personality: AI_PERSONALITY.AGGRESSIVE,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.AGGRESSIVE],
         difficulty: AI_DIFFICULTY.MEDIUM,
         description: '喜欢装逼直接干的选手',
         style: '装逼激进型',
@@ -218,6 +228,7 @@ const PRESET_BUDDIES = {
         name: '一花',
         avatar: '🌸',
         personality: AI_PERSONALITY.BALANCED,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.BALANCED],
         difficulty: AI_DIFFICULTY.HARD,
         description: '高手，打法均衡有章法',
         style: '均衡高手型',
@@ -235,6 +246,7 @@ const PRESET_BUDDIES = {
         name: '大海',
         avatar: '🌊',
         personality: AI_PERSONALITY.CONSERVATIVE,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.CONSERVATIVE],
         difficulty: AI_DIFFICULTY.HARD,
         description: '稳重型选手，很少冒险',
         style: '稳健保守型',
@@ -245,6 +257,114 @@ const PRESET_BUDDIES = {
             bluff: ['我手里的牌...', '你猜猜看。', '嗯...让我想想。'],
             allIn: ['是时候了。', '这手牌值得。', '稳中求胜。'],
             taunt: ['别急，慢慢打。', '冲动是魔鬼。', '淡定一点。']
+        }
+    },
+    xiaomei: {
+        id: 'xiaomei',
+        name: '小美',
+        avatar: '🦋',
+        personality: AI_PERSONALITY.BALANCED,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.BALANCED],
+        difficulty: AI_DIFFICULTY.EASY,
+        description: '新手玩家，但学习很快',
+        style: '灵活多变型',
+        dialogues: {
+            join: '大家好呀，请多指教！',
+            win: ['哇，我赢了！', '运气真好！', '太开心了！'],
+            lose: ['呜呜，又输了...', '下次加油！', '好难啊...'],
+            bluff: ['我要加注哦~', '你猜我有什么牌？', '嘿嘿~'],
+            allIn: ['拼了！', '豁出去了！', '相信自己！'],
+            taunt: ['你好厉害！', '教教我嘛~', '怎么打的这么好！']
+        }
+    },
+    laowang: {
+        id: 'laowang',
+        name: '老王',
+        avatar: '🦉',
+        personality: AI_PERSONALITY.CONSERVATIVE,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.CONSERVATIVE],
+        difficulty: AI_DIFFICULTY.MEDIUM,
+        description: '经验丰富的老牌手',
+        style: '老练稳重型',
+        dialogues: {
+            join: '年轻人，来学学吧。',
+            win: ['姜还是老的辣。', '经验很重要。', '呵呵，意料之中。'],
+            lose: ['哎，老了不中用了。', '这牌没法打...', '让你们一局。'],
+            bluff: ['嗯...让我想想...', '年轻人别急。', '你确定吗？'],
+            allIn: ['时机到了。', '看好了年轻人。', '这是经验。'],
+            taunt: ['年轻人还是太嫩。', '多打几年再说。', '慢慢学吧。']
+        }
+    },
+    aqiang: {
+        id: 'aqiang',
+        name: '阿强',
+        avatar: '🐺',
+        personality: AI_PERSONALITY.AGGRESSIVE,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.AGGRESSIVE],
+        difficulty: AI_DIFFICULTY.HARD,
+        description: '狼性十足的竞技选手',
+        style: '狼性进攻型',
+        dialogues: {
+            join: '今天不拿下你们不罢休！',
+            win: ['这才刚开始！', '继续！', '还有谁！'],
+            lose: ['可恶！', '不可能！', '我要翻盘！'],
+            bluff: ['来啊！', '有本事跟上！', '怕了？'],
+            allIn: ['梭哈！', '全压！', '干就完了！'],
+            taunt: ['就这水平？', '太弱了！', '下一个！']
+        }
+    },
+    xiaoyu: {
+        id: 'xiaoyu',
+        name: '小鱼',
+        avatar: '🐟',
+        personality: AI_PERSONALITY.CONSERVATIVE,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.CONSERVATIVE],
+        difficulty: AI_DIFFICULTY.EASY,
+        description: '胆小谨慎的小鱼儿',
+        style: '胆小保守型',
+        dialogues: {
+            join: '我...我来试试...',
+            win: ['真的吗？我赢了？', '太意外了！', '好开心！'],
+            lose: ['果然还是不行...', '好可怕...', '我就知道...'],
+            bluff: ['我...我加注...', '应该...可以吧？', '好紧张...'],
+            allIn: ['豁出去了！', '闭眼梭哈！', '妈呀！'],
+            taunt: ['你们好厉害...', '太强了...', '我要向你学习...']
+        }
+    },
+    dapeng: {
+        id: 'dapeng',
+        name: '大鹏',
+        avatar: '🦅',
+        personality: AI_PERSONALITY.MANIAC,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.MANIAC],
+        difficulty: AI_DIFFICULTY.HARD,
+        description: '志在高飞的疯狂玩家',
+        style: '高空俯冲型',
+        dialogues: {
+            join: '今天必须起飞！',
+            win: ['起飞！', '冲上云霄！', '无人能挡！'],
+            lose: ['只是暂时的！', '蓄力中...', '等着看吧！'],
+            bluff: ['敢跟吗！', '全场最靓的仔！', '信不信我有皇同！'],
+            allIn: ['起飞！梭哈！', '翱翔九天！', '一飞冲天！'],
+            taunt: ['小菜一碟！', '太低空了！', '跟我斗？']
+        }
+    },
+    miaomiao: {
+        id: 'miaomiao',
+        name: '喵喵',
+        avatar: '🐱',
+        personality: AI_PERSONALITY.BALANCED,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.BALANCED],
+        difficulty: AI_DIFFICULTY.MEDIUM,
+        description: '慵懒但精明的玩家',
+        style: '伺机而动型',
+        dialogues: {
+            join: '喵~开始吧~',
+            win: ['喵嘿嘿~', '太简单啦~', '喵~'],
+            lose: ['喵呜...', '不开心...', '哼，下次再赢回来！'],
+            bluff: ['喵？你确定？', '猜猜我有什么~', '喵嘿嘿~'],
+            allIn: ['拼了喵！', '喵喵冲锋！', '今天要赢喵！'],
+            taunt: ['喵~菜鸡~', '太弱了喵~', '你是小鱼干吗？']
         }
     }
 };

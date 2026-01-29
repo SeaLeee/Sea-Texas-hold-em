@@ -192,6 +192,13 @@ class ParticleSystem {
     }
 
     /**
+     * 烟花效果（外部调用接口）
+     */
+    fireworks(x, y) {
+        this.createFirework(x, y);
+    }
+
+    /**
      * 大牌出现效果
      */
     bigHandEffect(x, y, handRank) {

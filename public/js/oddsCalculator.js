@@ -530,6 +530,137 @@ class OddsCalculator {
     }
 
     /**
+     * 统一的赔率计算接口
+     * @param {Card[]} holeCards - 手牌
+     * @param {Card[]} communityCards - 公共牌
+     * @param {number} numOpponents - 对手数量
+     * @returns {Object} 赔率信息
+     */
+    calculateOdds(holeCards, communityCards, numOpponents) {
+        if (!holeCards || holeCards.length < 2) {
+            return {
+                winProbability: 0,
+                handStrength: 0,
+                handKey: '--',
+                currentHand: '等待发牌',
+                handRank: 0,
+                draws: []
+            };
+        }
+        
+        // 翻牌前
+        if (!communityCards || communityCards.length === 0) {
+            const preflopOdds = this.calculatePreflopOdds(holeCards, numOpponents);
+            return {
+                winProbability: preflopOdds.winProbability,
+                handStrength: preflopOdds.handStrength * 10,
+                handKey: preflopOdds.handKey,
+                currentHand: preflopOdds.handCategory.level + ' - ' + preflopOdds.handCategory.description,
+                handRank: 0,
+                draws: []
+            };
+        }
+        
+        // 翻牌后
+        const postflopOdds = this.calculatePostflopOdds(holeCards, communityCards, numOpponents);
+        const draws = [];
+        
+        if (postflopOdds.draws.flushDraw) {
+            draws.push({
+                name: '同花听牌',
+                outs: postflopOdds.draws.flushOuts,
+                probability: Math.round(postflopOdds.draws.flushOuts * 2)
+            });
+        }
+        if (postflopOdds.draws.straightDraw) {
+            draws.push({
+                name: '顺子听牌',
+                outs: postflopOdds.draws.straightOuts,
+                probability: Math.round(postflopOdds.draws.straightOuts * 2)
+            });
+        }
+        
+        return {
+            winProbability: postflopOdds.winProbability,
+            handStrength: postflopOdds.handStrength.tier === 'S' ? 100 :
+                          postflopOdds.handStrength.tier === 'A' ? 85 :
+                          postflopOdds.handStrength.tier === 'B' ? 70 :
+                          postflopOdds.handStrength.tier === 'C' ? 55 :
+                          postflopOdds.handStrength.tier === 'D' ? 35 : 20,
+            handKey: this.getHandKey(holeCards[0], holeCards[1]),
+            currentHand: postflopOdds.currentHand?.description || postflopOdds.handStrength.level,
+            handRank: postflopOdds.currentHand?.rank || 0,
+            draws: draws
+        };
+    }
+    
+    /**
+     * 统一的建议接口
+     * @param {Card[]} holeCards - 手牌
+     * @param {Card[]} communityCards - 公共牌
+     * @param {number} pot - 底池
+     * @param {number} toCall - 需要跟注金额
+     * @param {number} chips - 玩家筹码
+     * @param {number} activePlayers - 活跃玩家数
+     * @returns {Object} 建议信息
+     */
+    getAdvice(holeCards, communityCards, pot, toCall, chips, activePlayers) {
+        if (!holeCards || holeCards.length < 2) {
+            return {
+                action: 'WAIT',
+                confidence: 0,
+                reason: '等待发牌...',
+                details: []
+            };
+        }
+        
+        const numOpponents = Math.max(1, activePlayers - 1);
+        const currentBet = toCall;
+        
+        // 根据阶段生成建议
+        const phase = (!communityCards || communityCards.length === 0) ? GAME_PHASES.PREFLOP :
+                      communityCards.length === 3 ? GAME_PHASES.FLOP :
+                      communityCards.length === 4 ? GAME_PHASES.TURN : GAME_PHASES.RIVER;
+        
+        const gameState = {
+            phase: phase,
+            pot: pot,
+            currentBet: currentBet,
+            humanPlayer: { chips: chips, position: 'middle' },
+            activePlayers: activePlayers
+        };
+        
+        const advice = this.generateStrategyAdvice(gameState, holeCards, communityCards);
+        
+        // 转换 action 格式
+        const actionMap = {
+            '加注': 'RAISE',
+            '加注/再加注': 'RAISE',
+            '跟注': 'CALL',
+            '跟注/加注': 'CALL',
+            '过牌': 'CHECK',
+            '弃牌': 'FOLD',
+            '下注': 'RAISE',
+            '价值下注/加注': 'RAISE',
+            '下注/加注': 'RAISE',
+            '可以尝试偷盲': 'RAISE',
+            '弃牌/谨慎跟注': 'FOLD',
+            '谨慎跟注': 'CALL',
+            '跟注（追听牌）': 'CALL',
+            '跟注（半诈唬）': 'CALL',
+            '考虑弃牌': 'FOLD',
+            '加注/过牌': chips > currentBet ? 'RAISE' : 'CHECK'
+        };
+        
+        return {
+            action: actionMap[advice.action] || 'CHECK',
+            confidence: advice.confidence,
+            reason: advice.reason,
+            details: advice.details
+        };
+    }
+
+    /**
      * 获取完整的分析报告
      */
     getFullAnalysis(gameState) {

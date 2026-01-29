@@ -69,7 +69,10 @@ html, body {
     height: 100%;
     display: none;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 .screen.active {
@@ -81,6 +84,7 @@ html, body {
     background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #0d1b2a 100%);
     background-size: 200% 200%;
     animation: gradientShift 10s ease infinite;
+    padding: 20px 0;
 }
 
 @keyframes gradientShift {
@@ -90,9 +94,10 @@ html, body {
 
 .menu-container {
     text-align: center;
-    padding: 40px;
+    padding: 40px 20px;
     max-width: 500px;
     width: 90%;
+    margin: auto;
 }
 
 .game-logo h1 {
@@ -1635,6 +1640,27 @@ html, body {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     margin-top: 15px;
+    max-height: 350px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 5px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.1);
+}
+
+.buddy-selector::-webkit-scrollbar {
+    width: 6px;
+}
+
+.buddy-selector::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.buddy-selector::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
 }
 
 .buddy-card {
@@ -1713,6 +1739,22 @@ html, body {
     letter-spacing: 1px;
 }
 
+.buddy-personality {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.personality-animal {
+    font-size: 0.8rem;
+}
+
 .buddy-desc {
     font-size: 0.8rem;
     color: var(--text-secondary);
@@ -1772,6 +1814,77 @@ html, body {
 .buddy-card[data-buddy="dahai"].selected {
     background: linear-gradient(135deg, rgba(33, 150, 243, 0.15), rgba(33, 150, 243, 0.05));
     box-shadow: 0 0 20px rgba(33, 150, 243, 0.3);
+}
+
+.buddy-card[data-buddy="xiaomei"]:hover,
+.buddy-card[data-buddy="xiaomei"].selected {
+    border-color: #9c27b0;
+}
+
+.buddy-card[data-buddy="xiaomei"].selected {
+    background: linear-gradient(135deg, rgba(156, 39, 176, 0.15), rgba(156, 39, 176, 0.05));
+    box-shadow: 0 0 20px rgba(156, 39, 176, 0.3);
+}
+
+.buddy-card[data-buddy="laowang"]:hover,
+.buddy-card[data-buddy="laowang"].selected {
+    border-color: #607d8b;
+}
+
+.buddy-card[data-buddy="laowang"].selected {
+    background: linear-gradient(135deg, rgba(96, 125, 139, 0.15), rgba(96, 125, 139, 0.05));
+    box-shadow: 0 0 20px rgba(96, 125, 139, 0.3);
+}
+
+.buddy-card[data-buddy="aqiang"]:hover,
+.buddy-card[data-buddy="aqiang"].selected {
+    border-color: #795548;
+}
+
+.buddy-card[data-buddy="aqiang"].selected {
+    background: linear-gradient(135deg, rgba(121, 85, 72, 0.15), rgba(121, 85, 72, 0.05));
+    box-shadow: 0 0 20px rgba(121, 85, 72, 0.3);
+}
+
+.buddy-card[data-buddy="xiaoyu"]:hover,
+.buddy-card[data-buddy="xiaoyu"].selected {
+    border-color: #03a9f4;
+}
+
+.buddy-card[data-buddy="xiaoyu"].selected {
+    background: linear-gradient(135deg, rgba(3, 169, 244, 0.15), rgba(3, 169, 244, 0.05));
+    box-shadow: 0 0 20px rgba(3, 169, 244, 0.3);
+}
+
+.buddy-card[data-buddy="dapeng"]:hover,
+.buddy-card[data-buddy="dapeng"].selected {
+    border-color: #8bc34a;
+}
+
+.buddy-card[data-buddy="dapeng"].selected {
+    background: linear-gradient(135deg, rgba(139, 195, 74, 0.15), rgba(139, 195, 74, 0.05));
+    box-shadow: 0 0 20px rgba(139, 195, 74, 0.3);
+}
+
+.buddy-card[data-buddy="miaomiao"]:hover,
+.buddy-card[data-buddy="miaomiao"].selected {
+    border-color: #ff5722;
+}
+
+.buddy-card[data-buddy="miaomiao"].selected {
+    background: linear-gradient(135deg, rgba(255, 87, 34, 0.15), rgba(255, 87, 34, 0.05));
+    box-shadow: 0 0 20px rgba(255, 87, 34, 0.3);
+}
+
+.buddy-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.buddy-limit {
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
 /* ===== NPC对话气泡样式 ===== */

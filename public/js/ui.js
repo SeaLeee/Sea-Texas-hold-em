@@ -113,8 +113,8 @@ class UI {
             statsPanel: document.getElementById('stats-panel'),
             statsToggleBtn: document.getElementById('show-stats-btn'),
             statPot: document.getElementById('stat-pot'),
-            statCall: document.getElementById('stat-call'),
-            statMyChips: document.getElementById('stat-my-chips'),
+            statToCall: document.getElementById('stat-to-call'),
+            statPotOdds: document.getElementById('stat-pot-odds'),
             statActivePlayers: document.getElementById('stat-active-players'),
             playersChipsList: document.getElementById('players-chips-list'),
             
@@ -314,17 +314,48 @@ class UI {
     setupBuddySelector() {
         const buddyCards = document.querySelectorAll('.buddy-card');
         const selectedCountEl = document.getElementById('selected-count');
+        const maxBuddiesEl = document.getElementById('max-buddies');
+        
+        // 获取当前最大可选数量
+        const getMaxBuddies = () => {
+            const playerCount = parseInt(document.querySelector('.count-btn.active')?.dataset.count || '4');
+            return playerCount - 1; // 玩家数量-1（不包括自己）
+        };
+        
+        // 更新最大选择数量显示
+        const updateMaxBuddies = () => {
+            const maxBuddies = getMaxBuddies();
+            if (maxBuddiesEl) {
+                maxBuddiesEl.textContent = maxBuddies;
+            }
+            this.updateBuddyCardStates(maxBuddies);
+        };
+        
+        // 初始化最大选择数量
+        updateMaxBuddies();
+        
+        // 监听玩家数量变化
+        document.querySelectorAll('.count-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                updateMaxBuddies();
+            });
+        });
         
         buddyCards.forEach(card => {
             card.addEventListener('click', () => {
                 const buddyId = card.dataset.buddy;
                 const index = this.selectedBuddies.indexOf(buddyId);
+                const maxBuddies = getMaxBuddies();
                 
                 if (index > -1) {
                     // 已选择，取消选择
                     this.selectedBuddies.splice(index, 1);
                     card.classList.remove('selected');
                 } else {
+                    // 检查是否超过最大数量
+                    if (this.selectedBuddies.length >= maxBuddies) {
+                        return; // 已达最大数量，不再添加
+                    }
                     // 未选择，添加选择
                     this.selectedBuddies.push(buddyId);
                     card.classList.add('selected');
@@ -334,8 +365,43 @@ class UI {
                 if (selectedCountEl) {
                     selectedCountEl.textContent = this.selectedBuddies.length;
                 }
+                
+                // 更新卡片状态
+                this.updateBuddyCardStates(maxBuddies);
             });
         });
+    }
+    
+    /**
+     * 更新小伙伴卡片状态（禁用/启用）
+     */
+    updateBuddyCardStates(maxBuddies) {
+        const buddyCards = document.querySelectorAll('.buddy-card');
+        const isMaxReached = this.selectedBuddies.length >= maxBuddies;
+        
+        buddyCards.forEach(card => {
+            const isSelected = card.classList.contains('selected');
+            if (isMaxReached && !isSelected) {
+                card.classList.add('disabled');
+            } else {
+                card.classList.remove('disabled');
+            }
+        });
+        
+        // 如果选择数量超过最大数，自动取消多余的选择
+        while (this.selectedBuddies.length > maxBuddies) {
+            const removedId = this.selectedBuddies.pop();
+            const card = document.querySelector(`.buddy-card[data-buddy="${removedId}"]`);
+            if (card) {
+                card.classList.remove('selected');
+            }
+        }
+        
+        // 更新计数显示
+        const selectedCountEl = document.getElementById('selected-count');
+        if (selectedCountEl) {
+            selectedCountEl.textContent = this.selectedBuddies.length;
+        }
     }
 
     /**
@@ -1302,14 +1368,20 @@ class UI {
         }
         
         // 需要跟注金额
-        if (this.elements.statCall) {
+        if (this.elements.statToCall) {
             const toCall = this.gameState.currentBet - humanPlayer.currentBet;
-            this.elements.statCall.textContent = this.formatNumber(Math.max(0, toCall));
+            this.elements.statToCall.textContent = this.formatNumber(Math.max(0, toCall));
         }
         
-        // 我的筹码
-        if (this.elements.statMyChips) {
-            this.elements.statMyChips.textContent = this.formatNumber(humanPlayer.chips);
+        // 底池赔率
+        if (this.elements.statPotOdds) {
+            const toCall = this.gameState.currentBet - humanPlayer.currentBet;
+            if (toCall > 0 && this.gameState.pot > 0) {
+                const potOdds = ((toCall / (this.gameState.pot + toCall)) * 100).toFixed(1);
+                this.elements.statPotOdds.textContent = `${potOdds}%`;
+            } else {
+                this.elements.statPotOdds.textContent = '--';
+            }
         }
         
         // 活跃玩家数
