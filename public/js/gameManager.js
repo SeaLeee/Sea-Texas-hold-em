@@ -21,14 +21,18 @@ class GameManager {
         this.minRaise = 0;
         this.lastRaiser = null;
         
-        // AI
-        this.ai = new AI(this.settings.difficulty);
+        // AI系统
+        this.ai = new AI(this.settings.difficulty, this.settings.aiPersonality || AI_PERSONALITY.BALANCED);
+        
+        // 粒子系统
+        this.particleSystem = null;
         
         // 回调函数
         this.onStateChange = null;
         this.onPlayerAction = null;
         this.onGameEnd = null;
         this.onRoundEnd = null;
+        this.onAllIn = null;  // ALL IN 事件回调
         
         // 游戏统计
         this.roundNumber = 0;
@@ -40,7 +44,13 @@ class GameManager {
      */
     initialize(settings = {}) {
         this.settings = { ...DEFAULT_SETTINGS, ...settings };
-        this.ai = new AI(this.settings.difficulty);
+        
+        // 初始化AI系统（支持难度和性格）
+        const personality = this.settings.aiPersonality || AI_PERSONALITY.BALANCED;
+        this.ai = new AI(this.settings.difficulty, personality);
+        
+        // 初始化粒子系统
+        this.initParticleSystem();
         
         // 创建玩家
         this.players = [];
@@ -71,6 +81,46 @@ class GameManager {
         this.phase = GAME_PHASES.WAITING;
         
         this.notifyStateChange();
+    }
+
+    /**
+     * 初始化粒子系统
+     */
+    initParticleSystem() {
+        const canvas = document.getElementById('particle-canvas');
+        if (canvas && typeof ParticleSystem !== 'undefined') {
+            this.particleSystem = new ParticleSystem(canvas);
+        }
+    }
+
+    /**
+     * 触发ALL IN粒子效果
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     */
+    triggerAllInEffect(x, y) {
+        if (this.particleSystem) {
+            this.particleSystem.allInExplosion(x, y);
+        }
+    }
+
+    /**
+     * 触发赢牌庆祝效果
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     * @param {number} amount - 赢得金额
+     */
+    triggerWinEffect(x, y, amount) {
+        if (this.particleSystem) {
+            this.particleSystem.celebrateWin(x, y);
+            // 大额赢取时添加额外烟花
+            if (amount >= this.settings.startingChips * 0.5) {
+                setTimeout(() => {
+                    this.particleSystem.fireworks(x - 100, y - 50);
+                    this.particleSystem.fireworks(x + 100, y - 50);
+                }, 300);
+            }
+        }
     }
 
     /**
@@ -634,6 +684,24 @@ class GameManager {
      */
     setDifficulty(difficulty) {
         this.settings.difficulty = difficulty;
-        this.ai = new AI(difficulty);
+        const personality = this.settings.aiPersonality || AI_PERSONALITY.BALANCED;
+        this.ai = new AI(difficulty, personality);
+    }
+
+    /**
+     * 设置AI性格
+     * @param {string} personality - 性格类型
+     */
+    setPersonality(personality) {
+        this.settings.aiPersonality = personality;
+        this.ai = new AI(this.settings.difficulty, personality);
+    }
+
+    /**
+     * 获取粒子系统实例
+     * @returns {ParticleSystem|null}
+     */
+    getParticleSystem() {
+        return this.particleSystem;
     }
 }

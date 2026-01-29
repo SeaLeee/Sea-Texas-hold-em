@@ -73,9 +73,31 @@ class TexasHoldemApp {
                 break;
             case ACTIONS.ALLIN:
                 message += `全押 ${amount}`;
+                // 触发ALL IN粒子效果
+                this.triggerAllInParticles(player);
                 break;
         }
         this.ui.addLog(message);
+    }
+
+    /**
+     * 触发ALL IN粒子效果
+     * @param {Player} player - 执行ALL IN的玩家
+     */
+    triggerAllInParticles(player) {
+        const playerSeat = document.getElementById(`player-seat-${player.id}`);
+        if (playerSeat && this.game.getParticleSystem()) {
+            const rect = playerSeat.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            this.game.triggerAllInEffect(x, y);
+            
+            // 添加高亮动画类
+            playerSeat.classList.add('all-in-highlight');
+            setTimeout(() => {
+                playerSeat.classList.remove('all-in-highlight');
+            }, 800);
+        }
     }
 
     /**
@@ -94,10 +116,33 @@ class TexasHoldemApp {
         // 高亮赢家
         this.ui.highlightWinners(result.winners.map(w => w.player.id));
 
+        // 触发赢家粒子效果
+        this.triggerWinnerParticles(result);
+
         // 显示结果弹窗
         setTimeout(() => {
             this.ui.showRoundResult(result);
         }, 1500);
+    }
+
+    /**
+     * 触发赢家粒子效果
+     * @param {Object} result - 回合结果
+     */
+    triggerWinnerParticles(result) {
+        result.winners.forEach((winner, index) => {
+            const playerSeat = document.getElementById(`player-seat-${winner.player.id}`);
+            if (playerSeat && this.game.getParticleSystem()) {
+                const rect = playerSeat.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                
+                // 延迟触发，让效果更有层次
+                setTimeout(() => {
+                    this.game.triggerWinEffect(x, y, result.winAmount);
+                }, index * 200);
+            }
+        });
     }
 
     /**

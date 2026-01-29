@@ -131,13 +131,15 @@ html, body {
 .difficulty-selector,
 .player-count-selector,
 .chips-selector,
-.blinds-selector {
+.blinds-selector,
+.personality-selector {
     display: flex;
     gap: 10px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
-.diff-btn, .count-btn, .chips-btn, .blinds-btn {
+.diff-btn, .count-btn, .chips-btn, .blinds-btn, .pers-btn {
     padding: 12px 24px;
     border: 2px solid rgba(255, 255, 255, 0.2);
     background: rgba(255, 255, 255, 0.05);
@@ -149,16 +151,43 @@ html, body {
     font-weight: 500;
 }
 
-.diff-btn:hover, .count-btn:hover, .chips-btn:hover, .blinds-btn:hover {
+.diff-btn:hover, .count-btn:hover, .chips-btn:hover, .blinds-btn:hover, .pers-btn:hover {
     border-color: var(--accent-color);
     background: rgba(255, 215, 0, 0.1);
 }
 
-.diff-btn.active, .count-btn.active, .chips-btn.active, .blinds-btn.active {
+.diff-btn.active, .count-btn.active, .chips-btn.active, .blinds-btn.active, .pers-btn.active {
     border-color: var(--accent-color);
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
     color: var(--accent-color);
     box-shadow: var(--shadow-glow);
+}
+
+/* 性格按钮特殊样式 */
+.pers-btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+}
+
+.pers-btn[data-personality="conservative"].active {
+    border-color: #4caf50;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    color: #4caf50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+}
+
+.pers-btn[data-personality="aggressive"].active {
+    border-color: #ff9800;
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1));
+    color: #ff9800;
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
+}
+
+.pers-btn[data-personality="maniac"].active {
+    border-color: #f44336;
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
+    color: #f44336;
+    box-shadow: 0 0 15px rgba(244, 67, 54, 0.3);
 }
 
 .start-btn {
@@ -1490,4 +1519,95 @@ html, body {
 
 .allin-btn:disabled::before {
     animation: none;
+}
+
+/* ===== 粒子系统 Canvas ===== */
+#particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* ===== 赢牌庆祝动画 ===== */
+@keyframes winCelebration {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.05); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+.player-seat.winner {
+    animation: winCelebration 0.5s ease-out;
+}
+
+.player-seat.winner .player-avatar {
+    border-color: var(--success-color);
+    box-shadow: 
+        0 0 30px rgba(76, 175, 80, 0.8),
+        0 0 60px rgba(76, 175, 80, 0.4);
+    animation: winnerGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes winnerGlow {
+    from {
+        box-shadow: 
+            0 0 30px rgba(76, 175, 80, 0.8),
+            0 0 60px rgba(76, 175, 80, 0.4);
+    }
+    to {
+        box-shadow: 
+            0 0 50px rgba(255, 215, 0, 0.9),
+            0 0 80px rgba(255, 215, 0, 0.5);
+    }
+}
+
+/* ALL IN 事件特效 */
+.all-in-highlight {
+    animation: allInPulse 0.8s ease-out;
+}
+
+@keyframes allInPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 30px rgba(255, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+    }
+}
+
+/* 大牌出现时的特效 */
+.big-hand-reveal {
+    animation: bigHandReveal 1s ease-out;
+}
+
+@keyframes bigHandReveal {
+    0% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.5);
+    }
+    100% {
+        filter: brightness(1);
+    }
+}
+
+/* 响应式调整 - 性格选择器 */
+@media (max-width: 600px) {
+    .personality-selector {
+        gap: 6px;
+    }
+    
+    .pers-btn {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+    }
 }

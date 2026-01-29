@@ -161,6 +161,7 @@ class UI {
         this.setupButtonGroup('.count-btn', 'data-count');
         this.setupButtonGroup('.chips-btn', 'data-chips');
         this.setupButtonGroup('.blinds-btn', 'data-blinds');
+        this.setupButtonGroup('.pers-btn', 'data-personality');
 
         // 游戏操作按钮
         this.elements.foldBtn.addEventListener('click', () => {
@@ -291,13 +292,15 @@ class UI {
         const startingChips = parseInt(document.querySelector('.chips-btn.active')?.dataset.chips) || 5000;
         const blindsStr = document.querySelector('.blinds-btn.active')?.dataset.blinds || '10/20';
         const [smallBlind, bigBlind] = blindsStr.split('/').map(Number);
+        const aiPersonality = document.querySelector('.pers-btn.active')?.dataset.personality || AI_PERSONALITY.BALANCED;
 
         return {
             difficulty,
             playerCount,
             startingChips,
             smallBlind,
-            bigBlind
+            bigBlind,
+            aiPersonality
         };
     }
 

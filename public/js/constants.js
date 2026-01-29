@@ -109,6 +109,54 @@ const DIFFICULTY_NAMES = {
     [AI_DIFFICULTY.HARD]: '困难'
 };
 
+// AI性格类型
+const AI_PERSONALITY = {
+    CONSERVATIVE: 'conservative',  // 保守型 - 紧凶
+    BALANCED: 'balanced',          // 平衡型 - 标准TAG
+    AGGRESSIVE: 'aggressive',      // 激进型 - 松凶
+    MANIAC: 'maniac'              // 疯狂型 - 超激进
+};
+
+// 性格显示名称
+const PERSONALITY_NAMES = {
+    [AI_PERSONALITY.CONSERVATIVE]: '🛡️ 保守型',
+    [AI_PERSONALITY.BALANCED]: '⚖️ 平衡型',
+    [AI_PERSONALITY.AGGRESSIVE]: '🔥 激进型',
+    [AI_PERSONALITY.MANIAC]: '💀 疯狂型'
+};
+
+// 性格参数配置
+const PERSONALITY_CONFIG = {
+    [AI_PERSONALITY.CONSERVATIVE]: {
+        vpip: 0.15,        // 入池率
+        pfr: 0.10,         // 翻前加注率
+        aggression: 0.3,   // 激进度
+        bluffFreq: 0.05,   // 诈唬频率
+        foldToPressure: 0.7 // 面对压力弃牌率
+    },
+    [AI_PERSONALITY.BALANCED]: {
+        vpip: 0.25,
+        pfr: 0.18,
+        aggression: 0.5,
+        bluffFreq: 0.15,
+        foldToPressure: 0.5
+    },
+    [AI_PERSONALITY.AGGRESSIVE]: {
+        vpip: 0.35,
+        pfr: 0.28,
+        aggression: 0.7,
+        bluffFreq: 0.25,
+        foldToPressure: 0.3
+    },
+    [AI_PERSONALITY.MANIAC]: {
+        vpip: 0.50,
+        pfr: 0.40,
+        aggression: 0.9,
+        bluffFreq: 0.40,
+        foldToPressure: 0.15
+    }
+};
+
 // 默认游戏设置
 const DEFAULT_SETTINGS = {
     difficulty: AI_DIFFICULTY.MEDIUM,
