@@ -63,35 +63,47 @@ class TexasHoldemApp {
         switch (action) {
             case ACTIONS.FOLD:
                 message += '弃牌';
+                // NPC弃牌时偶尔会说话
+                if (!player.isHuman && Math.random() < 0.5) {
+                    dialogueType = 'lose';
+                }
                 break;
             case ACTIONS.CHECK:
                 message += '过牌';
+                // NPC过牌时偶尔会嘲讽
+                if (!player.isHuman && Math.random() < 0.3) {
+                    dialogueType = 'taunt';
+                }
                 break;
             case ACTIONS.CALL:
                 message += `跟注 ${amount}`;
+                // NPC跟注时可能会说话
+                if (!player.isHuman && Math.random() < 0.4) {
+                    dialogueType = Math.random() < 0.5 ? 'taunt' : 'bluff';
+                }
                 break;
             case ACTIONS.RAISE:
                 message += `加注到 ${player.currentBet}`;
-                // AI加注时可能会嘲讽
-                if (!player.isHuman && Math.random() < 0.4) {
-                    dialogueType = 'taunt';
+                // AI加注时高概率会嘲讽
+                if (!player.isHuman && Math.random() < 0.7) {
+                    dialogueType = Math.random() < 0.6 ? 'taunt' : 'bluff';
                 }
                 break;
             case ACTIONS.ALLIN:
                 message += `全押 ${amount}`;
                 // 触发ALL IN粒子效果
                 this.triggerAllInParticles(player);
-                // AI全押时大概率会说话
-                if (!player.isHuman && Math.random() < 0.7) {
-                    dialogueType = 'bluff';
+                // AI全押时必定会说话
+                if (!player.isHuman) {
+                    dialogueType = 'allIn';
                 }
                 break;
         }
         
         this.ui.addLog(message);
         
-        // 触发NPC对话
-        if (dialogueType && player.isBuddy && player.isBuddy()) {
+        // 触发NPC对话 - 放宽条件，只要是NPC就显示
+        if (dialogueType && !player.isHuman) {
             this.ui.showPlayerDialogue(player, dialogueType);
         }
     }

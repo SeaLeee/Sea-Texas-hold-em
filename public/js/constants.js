@@ -127,55 +127,55 @@ const PERSONALITY_NAMES = {
     [AI_PERSONALITY.MATHEMATICIAN]: '🧮 数学家型'
 };
 
-// 性格参数配置 - 增强版：更难对付，不轻易弃牌
+// 性格参数配置 - 超强化版：NPC极度粘锅，几乎不弃牌
 const PERSONALITY_CONFIG = {
     [AI_PERSONALITY.CONSERVATIVE]: {
-        vpip: 0.22,        // 入池率（提高入池率）
-        pfr: 0.15,         // 翻前加注率
-        aggression: 0.45,  // 激进度（提高）
-        bluffFreq: 0.12,   // 诈唬频率（增加诈唬）
-        foldToPressure: 0.45, // 面对压力弃牌率（大幅降低弃牌率）
-        callDown: 0.6,     // 跟注到底的意愿
-        trapFreq: 0.25     // 陷阱打法频率
+        vpip: 0.35,        // 大幅提高入池率
+        pfr: 0.22,         // 提高翻前加注率
+        aggression: 0.55,  // 提高激进度
+        bluffFreq: 0.18,   // 增加诈唬频率
+        foldToPressure: 0.12, // 极低弃牌率
+        callDown: 0.80,    // 高跟注意愿
+        trapFreq: 0.30     // 陷阱打法频率
     },
     [AI_PERSONALITY.BALANCED]: {
-        vpip: 0.32,
-        pfr: 0.24,
-        aggression: 0.65,
-        bluffFreq: 0.22,
-        foldToPressure: 0.30, // 大幅降低弃牌率
-        callDown: 0.70,
-        trapFreq: 0.30
-    },
-    [AI_PERSONALITY.AGGRESSIVE]: {
         vpip: 0.42,
-        pfr: 0.35,
-        aggression: 0.82,
-        bluffFreq: 0.35,
-        foldToPressure: 0.18, // 几乎不弃牌
-        callDown: 0.80,
+        pfr: 0.30,
+        aggression: 0.72,
+        bluffFreq: 0.28,
+        foldToPressure: 0.08, // 几乎不弃牌
+        callDown: 0.85,
         trapFreq: 0.35
     },
-    [AI_PERSONALITY.MANIAC]: {
-        vpip: 0.58,
-        pfr: 0.48,
-        aggression: 0.95,
-        bluffFreq: 0.50,
-        foldToPressure: 0.08, // 极少弃牌
-        callDown: 0.90,
+    [AI_PERSONALITY.AGGRESSIVE]: {
+        vpip: 0.55,
+        pfr: 0.42,
+        aggression: 0.88,
+        bluffFreq: 0.42,
+        foldToPressure: 0.05, // 基本不弃牌
+        callDown: 0.92,
         trapFreq: 0.40
+    },
+    [AI_PERSONALITY.MANIAC]: {
+        vpip: 0.70,
+        pfr: 0.58,
+        aggression: 0.98,
+        bluffFreq: 0.55,
+        foldToPressure: 0.02, // 几乎永不弃牌
+        callDown: 0.98,
+        trapFreq: 0.45
     },
     // 数学家型 - 纯概率计算，完全基于EV决策
     [AI_PERSONALITY.MATHEMATICIAN]: {
-        vpip: 0.28,          // 中等入池率，只打正EV的牌
-        pfr: 0.22,           // 中等加注率
-        aggression: 0.60,    // 中等激进度
-        bluffFreq: 0.18,     // 平衡的诈唬频率
-        foldToPressure: 0.35,// 根据EV决定，不会盲目跟注
-        callDown: 0.65,      // 基于概率决定
-        trapFreq: 0.20,      // 有策略地慢打
+        vpip: 0.38,          // 提高入池率
+        pfr: 0.28,           // 提高加注率
+        aggression: 0.68,    // 提高激进度
+        bluffFreq: 0.22,     // 平衡的诈唬频率
+        foldToPressure: 0.10,// 低弃牌率，但基于EV决定
+        callDown: 0.78,      // 基于概率决定
+        trapFreq: 0.28,      // 有策略地慢打
         useMathMode: true,   // 启用纯数学模式
-        evThreshold: 0.05,   // EV阈值，高于此值才行动
+        evThreshold: 0.02,   // 降低EV阈值，更容易行动
         potOddsStrict: true  // 严格遵循底池赔率
     }
 };

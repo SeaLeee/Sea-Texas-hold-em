@@ -350,15 +350,28 @@ class AI {
         const noise = (Math.random() - 0.5) * 0.4;
         const adjustedStrength = Math.max(0, Math.min(1, handStrength + noise));
         
-        // 简单决策：基于手牌强度
-        if (adjustedStrength < 0.2) {
+        // 简单决策：基于手牌强度 - 大幅提高跟注意愿
+        if (adjustedStrength < 0.15) {
             if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+            // 小额跟注不弃牌
+            if (toCall <= bigBlind * 4 && actions[ACTIONS.CALL]) {
+                return { action: ACTIONS.CALL };
+            }
+            // 中额跟注有50%跟注
+            if (toCall <= bigBlind * 8 && actions[ACTIONS.CALL] && Math.random() < 0.5) {
+                return { action: ACTIONS.CALL };
+            }
             return { action: ACTIONS.FOLD };
         }
         
-        if (adjustedStrength < 0.4) {
+        if (adjustedStrength < 0.35) {
             if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
-            if (toCall <= bigBlind * 3 && actions[ACTIONS.CALL]) {
+            // 大幅提高跟注阈值
+            if (toCall <= bigBlind * 8 && actions[ACTIONS.CALL]) {
+                return { action: ACTIONS.CALL };
+            }
+            // 即使面对较大加注也有概率跟注
+            if (actions[ACTIONS.CALL] && Math.random() < 0.4) {
                 return { action: ACTIONS.CALL };
             }
             return { action: ACTIONS.FOLD };

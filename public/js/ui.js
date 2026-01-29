@@ -780,7 +780,24 @@ class UI {
      * @param {string} type - 对话类型
      */
     showPlayerDialogue(player, type) {
-        const dialogue = player.speak(type);
+        // 先尝试从玩家配置获取对话
+        let dialogue = player.speak(type);
+        
+        // 如果没有对话配置，使用默认对话
+        if (!dialogue) {
+            const defaultDialogues = {
+                win: ['赢了！', '哈哈！', '太棒了！', '就是这么强！'],
+                lose: ['算了...', '下次再来', '唉...', '运气不好'],
+                bluff: ['你敢跟吗？', '来啊！', '不服？', '有胆就跟！'],
+                allIn: ['全押！', '梭哈！', '孤注一掷！', '拼了！'],
+                taunt: ['就这？', '太菜了', '再来！', '不过如此']
+            };
+            const dialogueList = defaultDialogues[type];
+            if (dialogueList) {
+                dialogue = dialogueList[Math.floor(Math.random() * dialogueList.length)];
+            }
+        }
+        
         if (dialogue) {
             const seat = document.getElementById(`player-seat-${player.id}`);
             if (seat) {
@@ -796,7 +813,9 @@ class UI {
                 
                 // 自动移除对话气泡
                 setTimeout(() => {
-                    bubble.remove();
+                    if (bubble.parentNode) {
+                        bubble.remove();
+                    }
                 }, 3000);
             }
         }
