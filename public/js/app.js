@@ -28,7 +28,27 @@ class TexasHoldemApp {
         this.game.onGameEnd = (result) => this.handleGameEnd(result);
         this.game.onAIThinking = (player, isThinking) => this.ui.showAIThinking(player, isThinking);
 
+        // 初始化音效系统（需要用户交互触发）
+        this.initSoundSystem();
+
         console.log('德州扑克游戏已初始化');
+    }
+
+    /**
+     * 初始化音效系统
+     */
+    initSoundSystem() {
+        // 在用户首次交互时初始化音效
+        const initSound = () => {
+            if (typeof soundManager !== 'undefined') {
+                soundManager.init();
+            }
+            document.removeEventListener('click', initSound);
+            document.removeEventListener('keydown', initSound);
+        };
+        
+        document.addEventListener('click', initSound);
+        document.addEventListener('keydown', initSound);
     }
 
     /**
@@ -42,6 +62,8 @@ class TexasHoldemApp {
         
         // 延迟开始第一手牌
         setTimeout(() => {
+            // 播放发牌音效
+            this.playSound('deal');
             this.game.startNewHand();
             this.ui.addLog(`第 ${this.game.roundNumber} 轮开始`);
         }, 500);
@@ -60,10 +82,12 @@ class TexasHoldemApp {
     logPlayerAction(player, action, amount) {
         let message = `<strong>${player.name}</strong> `;
         let dialogueType = null;
+        let soundType = null;
         
         switch (action) {
             case ACTIONS.FOLD:
                 message += '弃牌';
+                soundType = 'fold';
                 // NPC弃牌时偶尔会说话
                 if (!player.isHuman && Math.random() < 0.5) {
                     dialogueType = 'lose';
@@ -71,6 +95,7 @@ class TexasHoldemApp {
                 break;
             case ACTIONS.CHECK:
                 message += '过牌';
+                soundType = 'check';
                 // NPC过牌时偶尔会嘲讽
                 if (!player.isHuman && Math.random() < 0.3) {
                     dialogueType = 'taunt';
@@ -78,6 +103,7 @@ class TexasHoldemApp {
                 break;
             case ACTIONS.CALL:
                 message += `跟注 ${amount}`;
+                soundType = 'call';
                 // NPC跟注时可能会说话
                 if (!player.isHuman && Math.random() < 0.4) {
                     dialogueType = Math.random() < 0.5 ? 'taunt' : 'bluff';
@@ -85,6 +111,7 @@ class TexasHoldemApp {
                 break;
             case ACTIONS.RAISE:
                 message += `加注到 ${player.currentBet}`;
+                soundType = 'raise';
                 // AI加注时高概率会嘲讽
                 if (!player.isHuman && Math.random() < 0.7) {
                     dialogueType = Math.random() < 0.6 ? 'taunt' : 'bluff';
@@ -92,6 +119,7 @@ class TexasHoldemApp {
                 break;
             case ACTIONS.ALLIN:
                 message += `全押 ${amount}`;
+                soundType = 'allin';
                 // 触发ALL IN粒子效果
                 this.triggerAllInParticles(player);
                 // AI全押时必定会说话
@@ -101,11 +129,24 @@ class TexasHoldemApp {
                 break;
         }
         
+        // 播放操作音效
+        this.playSound(soundType);
+        
         this.ui.addLog(message);
         
         // 触发NPC对话 - 放宽条件，只要是NPC就显示
         if (dialogueType && !player.isHuman) {
             this.ui.showPlayerDialogue(player, dialogueType);
+        }
+    }
+
+    /**
+     * 播放音效
+     * @param {string} type - 音效类型
+     */
+    playSound(type) {
+        if (typeof soundManager !== 'undefined' && type) {
+            soundManager.play(type);
         }
     }
 
@@ -134,6 +175,9 @@ class TexasHoldemApp {
      */
     handleRoundEnd(result) {
         const winnerNames = result.winners.map(w => w.player.name).join(', ');
+        
+        // 播放获胜音效
+        this.playSound('win');
         
         if (result.reason === 'fold') {
             this.ui.addLog(`<strong>${winnerNames}</strong> 获胜（其他玩家弃牌），赢得 ${result.winAmount} 筹码`);
@@ -209,6 +253,8 @@ class TexasHoldemApp {
             return;
         }
 
+        // 播放发牌音效
+        this.playSound('deal');
         this.game.startNewHand();
         this.ui.addLog(`第 ${this.game.roundNumber} 轮开始`);
     }

@@ -166,9 +166,15 @@
                 </div>
             </div>
             
-            <button id="start-game-btn" class="start-btn">
-                <span>开始游戏</span>
-            </button>
+            <div class="game-mode-buttons">
+                <button id="start-game-btn" class="start-btn">
+                    <span>🎮 单机游戏</span>
+                </button>
+                
+                <button id="online-game-btn" class="start-btn online-btn">
+                    <span>🌐 联机对战</span>
+                </button>
+            </div>
             
             <button id="rules-btn" class="rules-btn">
                 <span>游戏规则</span>
@@ -367,6 +373,143 @@
         </div>
     </div>
     
+    <!-- 联机大厅界面 -->
+    <div id="lobby-screen" class="screen">
+        <div class="lobby-container">
+            <div class="lobby-header">
+                <button id="back-to-menu-btn" class="back-btn">← 返回</button>
+                <h2>🌐 联机大厅</h2>
+                <div class="connection-status" id="connection-status">
+                    <span class="status-dot disconnected"></span>
+                    <span class="status-text">未连接</span>
+                </div>
+            </div>
+            
+            <div class="lobby-content">
+                <div class="lobby-left">
+                    <div class="player-setup">
+                        <h3>👤 玩家设置</h3>
+                        <div class="setup-row">
+                            <label>昵称</label>
+                            <input type="text" id="player-nickname" placeholder="输入你的昵称" maxlength="12">
+                        </div>
+                        <div class="setup-row">
+                            <label>头像</label>
+                            <div class="avatar-selector" id="avatar-selector">
+                                <span class="avatar-option selected" data-avatar="😀">😀</span>
+                                <span class="avatar-option" data-avatar="😎">😎</span>
+                                <span class="avatar-option" data-avatar="🤠">🤠</span>
+                                <span class="avatar-option" data-avatar="🦊">🦊</span>
+                                <span class="avatar-option" data-avatar="🐱">🐱</span>
+                                <span class="avatar-option" data-avatar="🐶">🐶</span>
+                                <span class="avatar-option" data-avatar="🦁">🦁</span>
+                                <span class="avatar-option" data-avatar="🐼">🐼</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="create-room-section">
+                        <h3>🏠 创建房间</h3>
+                        <div class="setup-row">
+                            <label>房间名称</label>
+                            <input type="text" id="room-name-input" placeholder="输入房间名称" maxlength="20">
+                        </div>
+                        <div class="setup-row">
+                            <label>最大人数</label>
+                            <div class="room-size-selector">
+                                <button class="size-btn" data-size="2">2人</button>
+                                <button class="size-btn" data-size="4">4人</button>
+                                <button class="size-btn selected" data-size="6">6人</button>
+                            </div>
+                        </div>
+                        <div class="setup-row">
+                            <label>盲注设置</label>
+                            <div class="blinds-setup">
+                                <select id="room-blinds">
+                                    <option value="10/20">10/20</option>
+                                    <option value="25/50">25/50</option>
+                                    <option value="50/100">50/100</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="setup-row">
+                            <label>初始筹码</label>
+                            <select id="room-chips">
+                                <option value="1000">1,000</option>
+                                <option value="5000" selected>5,000</option>
+                                <option value="10000">10,000</option>
+                            </select>
+                        </div>
+                        <div class="setup-row">
+                            <label>房间密码 (可选)</label>
+                            <input type="password" id="room-password" placeholder="不设则公开">
+                        </div>
+                        <button id="create-room-btn" class="create-btn">🎲 创建房间</button>
+                    </div>
+                </div>
+                
+                <div class="lobby-right">
+                    <div class="room-list-section">
+                        <div class="room-list-header">
+                            <h3>📋 房间列表</h3>
+                            <button id="refresh-rooms-btn" class="refresh-btn">🔄 刷新</button>
+                        </div>
+                        <div class="room-list" id="room-list">
+                            <div class="no-rooms">暂无可用房间，点击上方刷新或创建新房间</div>
+                        </div>
+                    </div>
+                    
+                    <div class="quick-join-section">
+                        <h3>🚀 快速加入</h3>
+                        <div class="quick-join-row">
+                            <input type="text" id="room-id-input" placeholder="输入房间ID" maxlength="8">
+                            <input type="password" id="join-password" placeholder="密码(如有)">
+                            <button id="quick-join-btn" class="join-btn">加入</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 房间等待界面 -->
+    <div id="room-screen" class="screen">
+        <div class="room-container">
+            <div class="room-header">
+                <button id="leave-room-btn" class="back-btn">← 离开房间</button>
+                <div class="room-info-header">
+                    <h2 id="room-title">房间</h2>
+                    <span class="room-id-display" id="room-id-display">ID: ----</span>
+                </div>
+                <div class="room-settings-display">
+                    <span>盲注: <span id="room-blinds-display">10/20</span></span>
+                    <span>筹码: <span id="room-chips-display">1,000</span></span>
+                </div>
+            </div>
+            
+            <div class="room-content">
+                <div class="room-players-grid" id="room-players-grid">
+                    <!-- 座位将由JS动态生成 -->
+                </div>
+                
+                <div class="room-actions">
+                    <button id="ready-btn" class="ready-btn">✓ 准备</button>
+                    <button id="start-online-btn" class="start-btn" style="display: none;">🎮 开始游戏</button>
+                </div>
+                
+                <div class="room-chat">
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- 聊天消息将由JS动态生成 -->
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" placeholder="输入消息..." maxlength="100">
+                        <button id="send-chat-btn">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- 游戏日志 -->
     <div id="game-log" class="game-log">
         <div class="log-header">
@@ -518,8 +661,11 @@
     <script src="js/ai.js"></script>
     <script src="js/oddsCalculator.js"></script>
     <script src="js/particleSystem.js"></script>
+    <script src="js/soundManager.js"></script>
     <script src="js/gameManager.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/lobbyManager.js"></script>
+    <script src="js/onlineGameHandler.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

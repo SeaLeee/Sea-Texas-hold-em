@@ -526,6 +526,11 @@ html, body {
     filter: grayscale(100%);
 }
 
+.player-seat.folded .player-cards .poker-card {
+    filter: grayscale(100%) brightness(0.6);
+    opacity: 0.5;
+}
+
 .player-seat.winner .player-avatar {
     border-color: var(--success-color);
     box-shadow: 0 0 25px rgba(76, 175, 80, 0.6);
@@ -829,6 +834,11 @@ html, body {
 .result-player.folded {
     background: rgba(100, 100, 100, 0.2);
     opacity: 0.7;
+}
+
+.result-player.folded .result-card {
+    filter: grayscale(100%) brightness(0.8);
+    opacity: 0.8;
 }
 
 .result-player-name {
@@ -2246,6 +2256,703 @@ html, body {
         font-size: 2rem;
         margin-bottom: 0;
         margin-right: 12px;
+    }
+}
+
+/* ========================================
+   联机大厅界面样式
+======================================== */
+
+/* 联机按钮样式 */
+.online-btn {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
+    border: 2px solid #64B5F6;
+    margin-top: 10px;
+}
+
+.online-btn:hover {
+    background: linear-gradient(135deg, #42A5F5 0%, #2196F3 100%) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(33, 150, 243, 0.4);
+}
+
+/* 大厅容器 */
+.lobby-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 大厅头部 */
+.lobby-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(26, 92, 58, 0.3));
+    border-radius: var(--radius-xl);
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.lobby-header h2 {
+    font-size: 1.8rem;
+    color: var(--accent-color);
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    margin: 0;
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all var(--transition-normal);
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-color);
+}
+
+/* 连接状态 */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.status-dot.connected {
+    background: #4CAF50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
+    animation: pulse 2s infinite;
+}
+
+.status-dot.disconnected {
+    background: #f44336;
+}
+
+.status-dot.connecting {
+    background: #FFC107;
+    animation: blink 0.8s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.status-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* 大厅内容布局 */
+.lobby-content {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 25px;
+    flex: 1;
+}
+
+.lobby-left, .lobby-right {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 玩家设置区块 */
+.player-setup, .create-room-section, .room-list-section, .quick-join-section {
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(26, 92, 58, 0.2));
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
+.player-setup h3, .create-room-section h3, .room-list-section h3, .quick-join-section h3 {
+    font-size: 1.1rem;
+    color: var(--accent-color);
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+.setup-row {
+    margin-bottom: 15px;
+}
+
+.setup-row label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.setup-row input[type="text"],
+.setup-row input[type="password"],
+.setup-row select {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all var(--transition-normal);
+}
+
+.setup-row input:focus,
+.setup-row select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+/* 头像选择器 */
+.avatar-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.avatar-option {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.avatar-option:hover {
+    transform: scale(1.1);
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.avatar-option.selected {
+    border-color: var(--accent-color);
+    background: rgba(255, 215, 0, 0.15);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+/* 房间人数选择 */
+.room-size-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.size-btn {
+    flex: 1;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.size-btn:hover {
+    border-color: var(--accent-color);
+}
+
+.size-btn.selected {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+/* 创建房间按钮 */
+.create-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--success-color), #388E3C);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    margin-top: 10px;
+}
+
+.create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+}
+
+/* 房间列表 */
+.room-list-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.room-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+.room-list-header h3 {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.refresh-btn {
+    padding: 8px 15px;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--accent-color);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all var(--transition-normal);
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 215, 0, 0.25);
+}
+
+.room-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.no-rooms {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px 20px;
+    font-size: 0.95rem;
+}
+
+/* 房间卡片 */
+.room-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.room-card:hover {
+    border-color: var(--accent-color);
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.room-card-info {
+    flex: 1;
+}
+
+.room-card-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.room-card-name .lock-icon {
+    color: var(--warning-color);
+    font-size: 0.9rem;
+}
+
+.room-card-details {
+    display: flex;
+    gap: 15px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.room-card-players {
+    color: var(--success-color);
+}
+
+.room-card-status {
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.room-card-status.waiting {
+    background: rgba(76, 175, 80, 0.2);
+    color: var(--success-color);
+}
+
+.room-card-status.playing {
+    background: rgba(244, 67, 54, 0.2);
+    color: #ef5350;
+}
+
+.room-card-status.full {
+    background: rgba(158, 158, 158, 0.2);
+    color: #9e9e9e;
+}
+
+.join-btn {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.join-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+}
+
+.join-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+/* 快速加入 */
+.quick-join-row {
+    display: flex;
+    gap: 10px;
+}
+
+.quick-join-row input {
+    flex: 1;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+}
+
+/* ========================================
+   房间等待界面样式
+======================================== */
+
+.room-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(26, 92, 58, 0.3));
+    border-radius: var(--radius-xl);
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.room-info-header {
+    text-align: center;
+}
+
+.room-info-header h2 {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    margin: 0;
+}
+
+.room-id-display {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 12px;
+    border-radius: 10px;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+.room-settings-display {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.room-settings-display span span {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* 房间玩家网格 */
+.room-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.room-players-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 30px;
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(26, 92, 58, 0.2));
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+/* 座位卡片 */
+.seat-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 25px 15px;
+    text-align: center;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-normal);
+}
+
+.seat-card.empty {
+    opacity: 0.6;
+}
+
+.seat-card.occupied {
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-style: solid;
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.seat-card.ready {
+    border-color: var(--success-color);
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.seat-card.is-self {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+}
+
+.seat-card.is-host .seat-avatar::after {
+    content: '👑';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 1.2rem;
+}
+
+.seat-avatar {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.seat-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.seat-status {
+    font-size: 0.85rem;
+    padding: 5px 15px;
+    border-radius: 15px;
+    margin-top: 8px;
+}
+
+.seat-status.waiting {
+    background: rgba(255, 152, 0, 0.2);
+    color: #FFA726;
+}
+
+.seat-status.ready {
+    background: rgba(76, 175, 80, 0.2);
+    color: var(--success-color);
+}
+
+.empty-seat-text {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* 房间操作 */
+.room-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+.ready-btn {
+    padding: 15px 50px;
+    background: linear-gradient(135deg, var(--success-color), #388E3C);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.ready-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+}
+
+.ready-btn.is-ready {
+    background: linear-gradient(135deg, #FFA726, #F57C00);
+}
+
+/* 聊天区域 */
+.room-chat {
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(26, 92, 58, 0.2));
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: var(--radius-lg);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    max-height: 250px;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.chat-message {
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+}
+
+.chat-message .sender {
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-right: 8px;
+}
+
+.chat-message .content {
+    color: var(--text-primary);
+}
+
+.chat-message.system {
+    background: rgba(33, 150, 243, 0.2);
+    color: var(--info-color);
+    font-style: italic;
+    text-align: center;
+}
+
+.chat-input-row {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input-row input {
+    flex: 1;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+}
+
+.chat-input-row button {
+    padding: 12px 25px;
+    background: var(--accent-color);
+    border: none;
+    border-radius: var(--radius-md);
+    color: #1a1a2e;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.chat-input-row button:hover {
+    background: #ffca28;
+}
+
+/* 响应式设计 */
+@media (max-width: 900px) {
+    .lobby-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .room-players-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .lobby-container, .room-container {
+        padding: 15px;
+    }
+    
+    .lobby-header, .room-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .room-players-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-join-row {
+        flex-direction: column;
     }
     
     .buddy-info {

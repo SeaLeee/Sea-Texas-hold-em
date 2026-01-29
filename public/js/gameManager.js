@@ -363,15 +363,18 @@ class GameManager {
         switch (action) {
             case ACTIONS.FOLD:
                 player.fold();
+                player.lastBetAmount = 0;
                 break;
 
             case ACTIONS.CHECK:
                 player.check();
+                player.lastBetAmount = 0;
                 break;
 
             case ACTIONS.CALL:
                 betAmount = player.call(this.currentBet);
                 this.pot += betAmount;
+                player.lastBetAmount = betAmount;  // 保存跟注金额
                 break;
 
             case ACTIONS.RAISE:
@@ -380,6 +383,7 @@ class GameManager {
                 this.currentBet = player.currentBet;
                 this.minRaise = amount - (this.currentBet - betAmount);
                 this.lastRaiser = player;
+                player.lastBetAmount = player.currentBet;  // 保存加注后的总金额
                 break;
 
             case ACTIONS.ALLIN:
@@ -389,6 +393,7 @@ class GameManager {
                     this.currentBet = player.currentBet;
                     this.lastRaiser = player;
                 }
+                player.lastBetAmount = betAmount;  // 保存全押金额
                 break;
 
             default:

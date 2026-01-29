@@ -737,24 +737,40 @@ class UI {
         if (player.lastAction && state.phase !== GAME_PHASES.SHOWDOWN) {
             const actionIndicator = document.createElement('div');
             actionIndicator.className = 'player-action-indicator';
-            actionIndicator.textContent = ACTION_NAMES[player.lastAction] || '';
             
-            // 根据操作类型设置颜色
+            // 根据操作类型设置文本和颜色
+            let actionText = ACTION_NAMES[player.lastAction] || '';
+            
             switch (player.lastAction) {
                 case ACTIONS.FOLD:
                     actionIndicator.style.background = '#666';
                     break;
                 case ACTIONS.RAISE:
+                    actionIndicator.style.background = '#f44336';
+                    // 显示加注金额
+                    if (player.lastBetAmount > 0) {
+                        actionText = `加注 ${this.formatNumber(player.lastBetAmount)}`;
+                    }
+                    break;
                 case ACTIONS.ALLIN:
                     actionIndicator.style.background = '#f44336';
+                    // 显示全押金额
+                    if (player.lastBetAmount > 0) {
+                        actionText = `全押 ${this.formatNumber(player.lastBetAmount)}`;
+                    }
                     break;
                 case ACTIONS.CALL:
                     actionIndicator.style.background = '#2196f3';
+                    // 显示跟注金额
+                    if (player.lastBetAmount > 0) {
+                        actionText = `跟注 ${this.formatNumber(player.lastBetAmount)}`;
+                    }
                     break;
                 default:
                     actionIndicator.style.background = '#4caf50';
             }
             
+            actionIndicator.textContent = actionText;
             seat.appendChild(actionIndicator);
         }
 
@@ -954,6 +970,12 @@ class UI {
             this.elements.checkCallBtn.querySelector('.btn-text').textContent = '跟注';
             this.elements.checkCallBtn.querySelector('.btn-amount').textContent = this.formatNumber(actions[ACTIONS.CALL]);
             this.elements.checkCallBtn.dataset.action = ACTIONS.CALL;
+            this.elements.checkCallBtn.disabled = disabled;
+        } else if (actions[ACTIONS.ALLIN] && state.currentBet > player.currentBet) {
+            // 筹码不够跟注时，显示"跟注(全押)"按钮
+            this.elements.checkCallBtn.querySelector('.btn-text').textContent = '跟注';
+            this.elements.checkCallBtn.querySelector('.btn-amount').textContent = `全押 ${this.formatNumber(actions[ACTIONS.ALLIN])}`;
+            this.elements.checkCallBtn.dataset.action = ACTIONS.ALLIN;
             this.elements.checkCallBtn.disabled = disabled;
         } else {
             this.elements.checkCallBtn.disabled = true;

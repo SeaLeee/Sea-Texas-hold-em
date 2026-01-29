@@ -31,6 +31,7 @@ class Player {
         this.currentBet = 0;           // 当前轮次下注金额
         this.totalBetThisRound = 0;    // 本手牌总下注金额
         this.lastAction = null;        // 上一次操作
+        this.lastBetAmount = 0;        // 上一次下注/加注金额（用于UI显示）
         
         // 位置标记
         this.isDealer = false;
@@ -198,6 +199,7 @@ class Player {
         this.currentBet = 0;
         this.totalBetThisRound = 0;
         this.lastAction = null;
+        this.lastBetAmount = 0;
         this.isDealer = false;
         this.isSmallBlind = false;
         this.isBigBlind = false;

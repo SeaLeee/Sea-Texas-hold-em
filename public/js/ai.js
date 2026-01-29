@@ -340,7 +340,7 @@ class AI {
     }
 
     /**
-     * 简单难度决策 - 更多随机性，容易被利用
+     * 简单难度决策 - 更多随机性，容易被利用 - 极大提高跟注意愿
      */
     makeEasyDecision(player, actions, factors, gameState) {
         const { handStrength, equity, potOdds, toCall } = factors;
@@ -350,28 +350,27 @@ class AI {
         const noise = (Math.random() - 0.5) * 0.4;
         const adjustedStrength = Math.max(0, Math.min(1, handStrength + noise));
         
-        // 简单决策：基于手牌强度 - 大幅提高跟注意愿
+        // 简单AI极少弃牌 - 弱牌处理
         if (adjustedStrength < 0.15) {
             if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
-            // 小额跟注不弃牌
-            if (toCall <= bigBlind * 4 && actions[ACTIONS.CALL]) {
+            // 小额到中额跟注基本不弃牌
+            if (toCall <= bigBlind * 10 && actions[ACTIONS.CALL]) {
                 return { action: ACTIONS.CALL };
             }
-            // 中额跟注有50%跟注
-            if (toCall <= bigBlind * 8 && actions[ACTIONS.CALL] && Math.random() < 0.5) {
+            // 大额跟注有70%概率跟注
+            if (actions[ACTIONS.CALL] && Math.random() < 0.7) {
                 return { action: ACTIONS.CALL };
             }
+            // 极大额加注才弃牌
+            if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
             return { action: ACTIONS.FOLD };
         }
         
+        // 边缘牌处理 - 大幅提高跟注
         if (adjustedStrength < 0.35) {
             if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
-            // 大幅提高跟注阈值
-            if (toCall <= bigBlind * 8 && actions[ACTIONS.CALL]) {
-                return { action: ACTIONS.CALL };
-            }
-            // 即使面对较大加注也有概率跟注
-            if (actions[ACTIONS.CALL] && Math.random() < 0.4) {
+            // 基本都跟注
+            if (actions[ACTIONS.CALL]) {
                 return { action: ACTIONS.CALL };
             }
             return { action: ACTIONS.FOLD };
@@ -443,20 +442,15 @@ class AI {
     }
 
     /**
-     * 翻牌前决策
+     * 翻牌前决策 - 增强版：更愿意入池
      */
     makePreflopDecision(player, actions, factors, gameState, adjustedEquity) {
         const { handStrength, positionStrength, toCall } = factors;
         const { bigBlind } = gameState;
         const preflopScore = this.getPreflopScore(player.holeCards);
         
-        // 根据位置和手牌强度决定是否入池
-        const vpipThreshold = this.getVPIPThreshold(positionStrength);
-        
-        if (preflopScore < vpipThreshold) {
-            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
-            return { action: ACTIONS.FOLD };
-        }
+        // 根据位置和手牌强度决定是否入池 - 降低门槛
+        const vpipThreshold = this.getVPIPThreshold(positionStrength) * 0.8; // 降低20%门槛
         
         // 强牌加注
         const pfrThreshold = this.getPFRThreshold(positionStrength);
@@ -465,11 +459,32 @@ class AI {
             return { action: ACTIONS.RAISE, amount: raiseSize };
         }
         
-        // 跟注
-        if (toCall <= bigBlind * 4 && actions[ACTIONS.CALL]) {
+        // 大幅提高跟注意愿 - 小到中额加注基本都跟
+        if (toCall <= bigBlind * 6 && actions[ACTIONS.CALL]) {
             return { action: ACTIONS.CALL };
         }
         
+        // 较大加注，根据牌力决定
+        if (toCall <= bigBlind * 10 && preflopScore >= 5 && actions[ACTIONS.CALL]) {
+            return { action: ACTIONS.CALL };
+        }
+        
+        // 弱牌面对小额加注也有概率跟注
+        if (toCall <= bigBlind * 4 && actions[ACTIONS.CALL] && Math.random() < 0.6) {
+            return { action: ACTIONS.CALL };
+        }
+        
+        if (preflopScore < vpipThreshold) {
+            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+            // 即使弱牌，面对小额加注也有概率跟
+            if (toCall <= bigBlind * 3 && actions[ACTIONS.CALL]) {
+                return { action: ACTIONS.CALL };
+            }
+            return { action: ACTIONS.FOLD };
+        }
+        
+        // 其他情况都跟注
+        if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
         if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
         return { action: ACTIONS.FOLD };
     }
