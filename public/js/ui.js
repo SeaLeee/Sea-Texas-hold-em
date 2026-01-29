@@ -853,6 +853,41 @@ class UI {
     }
 
     /**
+     * 显示AI思考指示器
+     * @param {Player} player - AI玩家
+     * @param {boolean} isThinking - 是否正在思考
+     */
+    showAIThinking(player, isThinking) {
+        const seat = document.getElementById(`player-seat-${player.id}`);
+        if (!seat) return;
+        
+        // 移除旧的思考指示器
+        const oldIndicator = seat.querySelector('.thinking-indicator');
+        if (oldIndicator) {
+            oldIndicator.remove();
+        }
+        
+        if (isThinking) {
+            // 添加思考指示器
+            const indicator = document.createElement('div');
+            indicator.className = 'thinking-indicator';
+            indicator.innerHTML = `
+                <span class="thinking-dots">
+                    <span>.</span><span>.</span><span>.</span>
+                </span>
+                <span class="thinking-text">思考中</span>
+            `;
+            seat.appendChild(indicator);
+            
+            // 添加思考中的样式类
+            seat.classList.add('is-thinking');
+        } else {
+            // 移除思考中的样式类
+            seat.classList.remove('is-thinking');
+        }
+    }
+
+    /**
      * 更新玩家控制区域
      * @param {Object} state - 游戏状态
      */
@@ -1281,6 +1316,137 @@ class UI {
                 }
             });
         }
+        
+        // 初始化面板拖拽功能
+        this.initPanelDragging();
+    }
+
+    /**
+     * 初始化面板拖拽功能
+     */
+    initPanelDragging() {
+        const panels = [
+            this.elements.oddsPanel,
+            this.elements.strategyPanel,
+            this.elements.statsPanel
+        ];
+        
+        panels.forEach(panel => {
+            if (!panel) return;
+            
+            const header = panel.querySelector('.panel-header');
+            if (!header) return;
+            
+            let isDragging = false;
+            let startX, startY;
+            let initialLeft, initialTop;
+            
+            // 添加拖拽手柄样式
+            header.style.cursor = 'move';
+            
+            // 鼠标事件
+            header.addEventListener('mousedown', (e) => {
+                // 如果点击的是关闭按钮，不启动拖拽
+                if (e.target.classList.contains('toggle-panel-btn')) return;
+                
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                // 获取当前位置
+                const rect = panel.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                // 确保面板使用绝对定位
+                panel.style.position = 'fixed';
+                panel.style.left = `${initialLeft}px`;
+                panel.style.top = `${initialTop}px`;
+                panel.style.right = 'auto';
+                
+                // 添加拖拽中样式
+                panel.classList.add('dragging');
+                
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                let newLeft = initialLeft + deltaX;
+                let newTop = initialTop + deltaY;
+                
+                // 边界限制
+                const panelRect = panel.getBoundingClientRect();
+                const maxLeft = window.innerWidth - panelRect.width;
+                const maxTop = window.innerHeight - panelRect.height;
+                
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+                
+                panel.style.left = `${newLeft}px`;
+                panel.style.top = `${newTop}px`;
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    panel.classList.remove('dragging');
+                }
+            });
+            
+            // 触摸事件（移动端）
+            header.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('toggle-panel-btn')) return;
+                
+                const touch = e.touches[0];
+                isDragging = true;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                
+                const rect = panel.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                panel.style.position = 'fixed';
+                panel.style.left = `${initialLeft}px`;
+                panel.style.top = `${initialTop}px`;
+                panel.style.right = 'auto';
+                
+                panel.classList.add('dragging');
+            }, { passive: true });
+            
+            header.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - startX;
+                const deltaY = touch.clientY - startY;
+                
+                let newLeft = initialLeft + deltaX;
+                let newTop = initialTop + deltaY;
+                
+                const panelRect = panel.getBoundingClientRect();
+                const maxLeft = window.innerWidth - panelRect.width;
+                const maxTop = window.innerHeight - panelRect.height;
+                
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+                
+                panel.style.left = `${newLeft}px`;
+                panel.style.top = `${newTop}px`;
+            }, { passive: true });
+            
+            header.addEventListener('touchend', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    panel.classList.remove('dragging');
+                }
+            });
+        });
     }
 
     /**

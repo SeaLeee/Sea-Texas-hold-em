@@ -284,10 +284,24 @@ class GameManager {
             // 等待人类玩家操作
             this.notifyStateChange();
         } else {
-            // AI玩家自动操作
+            // AI玩家自动操作 - 添加随机延迟让思考更自然
+            // 基础延迟 + 随机延迟（1.5秒到3.5秒之间）
+            const baseDelay = ANIMATION_DURATION.AI_THINK;
+            const randomDelay = Math.random() * 2000; // 0-2秒随机
+            const totalDelay = baseDelay + randomDelay;
+            
+            // 显示思考指示器
+            if (this.onAIThinking) {
+                this.onAIThinking(currentPlayer, true);
+            }
+            
             setTimeout(() => {
+                // 隐藏思考指示器
+                if (this.onAIThinking) {
+                    this.onAIThinking(currentPlayer, false);
+                }
                 this.processAITurn(currentPlayer);
-            }, ANIMATION_DURATION.AI_THINK);
+            }, totalDelay);
         }
     }
 

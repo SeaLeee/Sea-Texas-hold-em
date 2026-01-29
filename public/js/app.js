@@ -26,6 +26,7 @@ class TexasHoldemApp {
         this.game.onPlayerAction = (player, action, amount) => this.logPlayerAction(player, action, amount);
         this.game.onRoundEnd = (result) => this.handleRoundEnd(result);
         this.game.onGameEnd = (result) => this.handleGameEnd(result);
+        this.game.onAIThinking = (player, isThinking) => this.ui.showAIThinking(player, isThinking);
 
         console.log('德州扑克游戏已初始化');
     }
