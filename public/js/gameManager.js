@@ -569,8 +569,8 @@ class GameManager {
     showdown() {
         this.phase = GAME_PHASES.SHOWDOWN;
 
-        // 显示所有未弃牌玩家的牌
-        for (const player of this.getPlayersInHand()) {
+        // 显示所有玩家的牌（包括弃牌的，用于结果展示）
+        for (const player of this.players) {
             player.holeCards.forEach(card => card.reveal());
         }
 
@@ -579,6 +579,9 @@ class GameManager {
             this.getPlayersInHand(),
             this.communityCards
         );
+
+        // 添加所有玩家信息（用于结果展示所有人底牌）
+        result.allPlayers = this.players;
 
         // 分配奖池
         this.distributePot(result);
@@ -601,6 +604,11 @@ class GameManager {
             const winner = winners[0];
             winner.win(this.pot);
             
+            // 显示所有玩家的牌（用于结果展示）
+            for (const player of this.players) {
+                player.holeCards.forEach(card => card.reveal());
+            }
+            
             const result = {
                 winners: [{
                     player: winner,
@@ -608,7 +616,8 @@ class GameManager {
                 }],
                 isTie: false,
                 winAmount: this.pot,
-                reason: 'fold'
+                reason: 'fold',
+                allPlayers: this.players  // 添加所有玩家信息
             };
 
             this.phase = GAME_PHASES.SHOWDOWN;

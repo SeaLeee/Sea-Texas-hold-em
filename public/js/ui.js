@@ -1004,22 +1004,68 @@ class UI {
         // 生成详情
         let detailsHTML = '';
         
-        if (result.allResults) {
-            for (const r of result.allResults) {
+        // 获取所有玩家信息（包括弃牌的）
+        const allPlayers = result.allPlayers || [];
+        const showdownPlayers = result.allResults || [];
+        
+        if (reason === 'fold') {
+            // 其他人弃牌获胜，显示赢家信息和所有玩家的底牌
+            for (const w of winners) {
+                detailsHTML += `
+                    <div class="result-player winner">
+                        <span class="result-player-name">${w.player.name}</span>
+                        <div class="result-player-cards">${this.renderPlayerCards(w.player)}</div>
+                        <span class="result-player-hand">其他玩家弃牌</span>
+                        <span class="result-player-winnings">+${this.formatNumber(result.winAmount || 0)}</span>
+                    </div>
+                `;
+            }
+            // 显示弃牌玩家的底牌
+            for (const player of allPlayers) {
+                if (!winners.some(w => w.player.id === player.id) && player.holeCards && player.holeCards.length > 0) {
+                    detailsHTML += `
+                        <div class="result-player folded">
+                            <span class="result-player-name">${player.name}</span>
+                            <div class="result-player-cards">${this.renderPlayerCards(player)}</div>
+                            <span class="result-player-hand">已弃牌</span>
+                            <span class="result-player-winnings"></span>
+                        </div>
+                    `;
+                }
+            }
+        } else if (showdownPlayers.length > 0) {
+            // 正常摊牌，显示所有参与摊牌玩家的底牌
+            for (const r of showdownPlayers) {
                 const isWinner = winners.some(w => w.player.id === r.player.id);
                 detailsHTML += `
                     <div class="result-player ${isWinner ? 'winner' : ''}">
                         <span class="result-player-name">${r.player.name}</span>
+                        <div class="result-player-cards">${this.renderPlayerCards(r.player)}</div>
                         <span class="result-player-hand">${r.evaluation ? r.evaluation.description : ''}</span>
                         <span class="result-player-winnings">${isWinner ? '+' + this.formatNumber(r.winAmount || 0) : ''}</span>
                     </div>
                 `;
             }
+            // 显示弃牌玩家的底牌
+            for (const player of allPlayers) {
+                if (!showdownPlayers.some(r => r.player.id === player.id) && player.holeCards && player.holeCards.length > 0) {
+                    detailsHTML += `
+                        <div class="result-player folded">
+                            <span class="result-player-name">${player.name}</span>
+                            <div class="result-player-cards">${this.renderPlayerCards(player)}</div>
+                            <span class="result-player-hand">已弃牌</span>
+                            <span class="result-player-winnings"></span>
+                        </div>
+                    `;
+                }
+            }
         } else {
+            // 后备方案：只有赢家信息
             for (const w of winners) {
                 detailsHTML += `
                     <div class="result-player winner">
                         <span class="result-player-name">${w.player.name}</span>
+                        <div class="result-player-cards">${this.renderPlayerCards(w.player)}</div>
                         <span class="result-player-hand">${reason === 'fold' ? '其他玩家弃牌' : ''}</span>
                         <span class="result-player-winnings">+${this.formatNumber(result.winAmount || 0)}</span>
                     </div>
@@ -1029,6 +1075,26 @@ class UI {
 
         this.elements.resultDetails.innerHTML = detailsHTML;
         this.showModal('resultModal');
+    }
+
+    /**
+     * 渲染玩家底牌的HTML
+     * @param {Player} player - 玩家对象
+     * @returns {string} HTML字符串
+     */
+    renderPlayerCards(player) {
+        if (!player.holeCards || player.holeCards.length === 0) {
+            return '';
+        }
+        
+        let html = '';
+        for (const card of player.holeCards) {
+            const color = card.getColor();
+            const rankDisplay = card.getRankDisplay();
+            const suitSymbol = card.getSuitSymbol();
+            html += `<span class="result-card ${color}">${rankDisplay}${suitSymbol}</span>`;
+        }
+        return html;
     }
 
     /**
