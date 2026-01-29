@@ -102,11 +102,14 @@ class OddsCalculator {
     calculatePostflopOdds(holeCards, communityCards, numOpponents) {
         const allCards = [...holeCards, ...communityCards];
         
-        // 评估当前手牌
+        // 评估当前手牌（可能为null，如果牌不足5张）
         const currentEval = HandEvaluator.evaluate(holeCards, communityCards);
         
         // 计算听牌概率（如果还有公共牌要发）
         const draws = this.calculateDraws(holeCards, communityCards);
+        
+        // 获取牌型等级，如果currentEval为null则默认为1（高牌）
+        const handRank = currentEval?.rank || currentEval?.handRank?.rank || 1;
         
         // 估算胜率
         const winProbability = this.estimateWinProbability(currentEval, draws, communityCards.length, numOpponents);
@@ -115,7 +118,7 @@ class OddsCalculator {
             currentHand: currentEval,
             draws: draws,
             winProbability: winProbability,
-            handStrength: this.getHandStrengthLevel(currentEval.rank)
+            handStrength: this.getHandStrengthLevel(handRank)
         };
     }
 
@@ -226,21 +229,38 @@ class OddsCalculator {
      * 估算胜率
      */
     estimateWinProbability(currentEval, draws, communityCardCount, numOpponents) {
+        // 安全获取牌型等级，如果currentEval为null则默认为1
+        const handRank = currentEval?.rank || currentEval?.handRank?.rank || 1;
+        
         // 基于当前牌型的基础胜率
-        const baseStrength = currentEval.rank / 10;
+        const baseStrength = handRank / 10;
+        
+        // 确保baseStrength是有效数字
+        if (isNaN(baseStrength) || !isFinite(baseStrength)) {
+            return 10; // 返回默认低胜率
+        }
+        
+        // 安全获取draws信息
+        const totalOuts = draws?.totalOuts || 0;
         
         // 考虑听牌的潜在价值
         let drawBonus = 0;
         if (communityCardCount < 5) {
             const remainingCards = 5 - communityCardCount;
             // 每张out大约2%胜率（转牌）或4%胜率（翻牌到河牌）
-            drawBonus = draws.totalOuts * (remainingCards === 2 ? 0.04 : 0.02);
+            drawBonus = totalOuts * (remainingCards === 2 ? 0.04 : 0.02);
         }
 
-        // 调整对手数量影响
-        let winProb = (baseStrength + drawBonus) * Math.pow(0.85, numOpponents - 1);
+        // 确保对手数量有效
+        const safeNumOpponents = Math.max(1, numOpponents || 1);
         
-        // 确保在0-100范围内
+        // 调整对手数量影响
+        let winProb = (baseStrength + drawBonus) * Math.pow(0.85, safeNumOpponents - 1);
+        
+        // 确保在0-100范围内，并处理NaN情况
+        if (isNaN(winProb) || !isFinite(winProb)) {
+            winProb = 0.1;
+        }
         winProb = Math.max(0, Math.min(1, winProb));
         
         return Math.round(winProb * 100);
@@ -293,16 +313,19 @@ class OddsCalculator {
         // 检查当前已有的牌型
         if (communityCards.length > 0) {
             const currentEval = HandEvaluator.evaluate(holeCards, communityCards);
-            switch(currentEval.rank) {
-                case 10: probabilities.royalFlush.achieved = true; break;
-                case 9: probabilities.straightFlush.achieved = true; break;
-                case 8: probabilities.fourOfAKind.achieved = true; break;
-                case 7: probabilities.fullHouse.achieved = true; break;
-                case 6: probabilities.flush.achieved = true; break;
-                case 5: probabilities.straight.achieved = true; break;
-                case 4: probabilities.threeOfAKind.achieved = true; break;
-                case 3: probabilities.twoPair.achieved = true; break;
-                case 2: probabilities.onePair.achieved = true; break;
+            // 安全检查：currentEval可能为null（牌不足5张时）
+            if (currentEval && currentEval.rank) {
+                switch(currentEval.rank) {
+                    case 10: probabilities.royalFlush.achieved = true; break;
+                    case 9: probabilities.straightFlush.achieved = true; break;
+                    case 8: probabilities.fourOfAKind.achieved = true; break;
+                    case 7: probabilities.fullHouse.achieved = true; break;
+                    case 6: probabilities.flush.achieved = true; break;
+                    case 5: probabilities.straight.achieved = true; break;
+                    case 4: probabilities.threeOfAKind.achieved = true; break;
+                    case 3: probabilities.twoPair.achieved = true; break;
+                    case 2: probabilities.onePair.achieved = true; break;
+                }
             }
         }
 

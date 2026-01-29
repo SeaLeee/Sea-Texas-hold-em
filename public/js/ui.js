@@ -1527,9 +1527,13 @@ class UI {
      * @param {string} phaseName - 阶段名称
      */
     updateOddsPanel(oddsInfo, phaseName) {
-        // 胜率
+        // 胜率 - 添加NaN安全检查
         if (this.elements.winProbValue) {
-            this.elements.winProbValue.textContent = Math.round(oddsInfo.winProbability);
+            const winProb = oddsInfo?.winProbability;
+            const displayValue = (winProb !== undefined && winProb !== null && !isNaN(winProb) && isFinite(winProb)) 
+                ? Math.round(winProb) 
+                : '--';
+            this.elements.winProbValue.textContent = displayValue;
         }
         
         // 当前牌型
@@ -1537,9 +1541,13 @@ class UI {
             this.elements.handCategory.textContent = oddsInfo.currentHand || '等待发牌';
         }
         
-        // 手牌强度条
+        // 手牌强度条 - 添加NaN安全检查
         if (this.elements.strengthFill) {
-            this.elements.strengthFill.style.width = `${oddsInfo.handStrength}%`;
+            const strength = oddsInfo?.handStrength;
+            const safeStrength = (strength !== undefined && strength !== null && !isNaN(strength) && isFinite(strength))
+                ? Math.max(0, Math.min(100, strength))
+                : 0;
+            this.elements.strengthFill.style.width = `${safeStrength}%`;
         }
         
         // 手牌表示
