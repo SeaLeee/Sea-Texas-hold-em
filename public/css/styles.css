@@ -938,3 +938,556 @@ html, body {
         font-size: 1.4rem;
     }
 }
+
+/* ===== 概率计算器面板 ===== */
+.odds-panel, .strategy-panel, .stats-panel {
+    position: fixed;
+    width: 280px;
+    max-height: 400px;
+    background: rgba(10, 10, 20, 0.95);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    display: none;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.odds-panel.active, .strategy-panel.active, .stats-panel.active {
+    display: block;
+    animation: panelSlideIn 0.3s ease;
+}
+
+@keyframes panelSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.odds-panel {
+    top: 80px;
+    left: 20px;
+}
+
+.strategy-panel {
+    top: 80px;
+    left: 320px;
+}
+
+.stats-panel {
+    top: 80px;
+    right: 340px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--accent-color);
+}
+
+.toggle-panel-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all var(--transition-fast);
+}
+
+.toggle-panel-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+.panel-content {
+    padding: 15px;
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.panel-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.3);
+    border-radius: 2px;
+}
+
+/* 概率分析部分 */
+.odds-section {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.odds-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.odds-title {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.win-probability {
+    text-align: center;
+    margin: 10px 0;
+}
+
+.prob-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.prob-label {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.hand-category {
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.hand-strength-bar {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.strength-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f44336, #ff9800, #4caf50, #ffd700);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+.hand-key {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 2px;
+}
+
+.draws-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.draw-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+}
+
+.draw-name {
+    color: var(--text-secondary);
+}
+
+.draw-outs {
+    font-weight: 600;
+    color: var(--info-color);
+}
+
+.probabilities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+}
+
+.prob-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 3px;
+}
+
+.prob-item.achieved {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid var(--success-color);
+}
+
+.prob-item .prob-name {
+    color: var(--text-secondary);
+}
+
+.prob-item .prob-percent {
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+/* ===== 攻略建议面板 ===== */
+.advice-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+    border-radius: var(--radius-md);
+    margin-bottom: 15px;
+}
+
+.advice-icon {
+    font-size: 2rem;
+}
+
+.advice-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+.advice-confidence {
+    margin-bottom: 12px;
+}
+
+.confidence-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success-color), var(--accent-color));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+.confidence-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.advice-reason {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 12px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.advice-details {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+}
+
+.details-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+#details-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#details-list li {
+    padding: 4px 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding-left: 15px;
+    position: relative;
+}
+
+#details-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+}
+
+/* ===== 数据统计面板 ===== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item.pot-stat {
+    grid-column: span 2;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.stat-icon {
+    font-size: 1.5rem;
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-item.pot-stat .stat-value {
+    color: var(--accent-color);
+    font-size: 1.3rem;
+}
+
+.players-chips-list {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+}
+
+.chips-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.player-chip-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.85rem;
+}
+
+.player-chip-item:last-child {
+    border-bottom: none;
+}
+
+.player-chip-item.is-human {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.player-chip-item.is-folded {
+    opacity: 0.5;
+}
+
+/* ===== 工具栏按钮 ===== */
+.toolbar-buttons {
+    position: fixed;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 150;
+}
+
+#game-screen.active ~ .toolbar-buttons {
+    display: flex;
+}
+
+.toolbar-btn {
+    width: 50px;
+    height: 50px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--text-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    transition: all var(--transition-normal);
+    backdrop-filter: blur(10px);
+}
+
+.toolbar-btn:hover {
+    border-color: var(--accent-color);
+    background: rgba(255, 215, 0, 0.2);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.toolbar-btn.active {
+    border-color: var(--accent-color);
+    background: rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+/* ===== ALL IN 按钮增强样式 ===== */
+.allin-btn {
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 50%, #ff4444 100%) !important;
+    background-size: 200% 200% !important;
+    animation: allinGradient 2s ease infinite;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #ff6666 !important;
+    box-shadow: 
+        0 0 20px rgba(255, 68, 68, 0.5),
+        inset 0 0 20px rgba(255, 255, 255, 0.1);
+    text-transform: uppercase;
+    font-weight: 800 !important;
+    letter-spacing: 2px;
+    min-width: 130px !important;
+}
+
+@keyframes allinGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.allin-btn .btn-text {
+    font-size: 1.1rem !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.allin-btn .allin-fire {
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    font-size: 1.2rem;
+    animation: fireFlicker 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes fireFlicker {
+    from { 
+        transform: scale(1) rotate(-5deg); 
+        filter: brightness(1);
+    }
+    to { 
+        transform: scale(1.2) rotate(5deg); 
+        filter: brightness(1.3);
+    }
+}
+
+.allin-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 
+        0 0 40px rgba(255, 68, 68, 0.8),
+        0 0 60px rgba(255, 68, 68, 0.4),
+        inset 0 0 30px rgba(255, 255, 255, 0.2);
+    border-color: #ff8888 !important;
+}
+
+.allin-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.allin-btn.clicked {
+    animation: allinExplosion 0.6s ease-out;
+}
+
+@keyframes allinExplosion {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 
+            0 0 60px rgba(255, 68, 68, 1),
+            0 0 100px rgba(255, 68, 68, 0.6),
+            0 0 150px rgba(255, 215, 0, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+    }
+}
+
+/* ALL IN 按钮的闪光效果 */
+.allin-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 70%
+    );
+    transform: rotate(45deg) translateX(-100%);
+    animation: allinShine 3s ease-in-out infinite;
+}
+
+@keyframes allinShine {
+    0%, 100% { transform: rotate(45deg) translateX(-100%); }
+    50% { transform: rotate(45deg) translateX(100%); }
+}
+
+.allin-btn:disabled {
+    animation: none;
+    background: linear-gradient(135deg, #444 0%, #333 100%) !important;
+    border-color: #555 !important;
+    box-shadow: none;
+}
+
+.allin-btn:disabled .allin-fire {
+    animation: none;
+    opacity: 0.3;
+}
+
+.allin-btn:disabled::before {
+    animation: none;
+}

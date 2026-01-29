@@ -203,7 +203,8 @@
                         <span class="btn-key">R</span>
                     </button>
                     <button id="allin-btn" class="action-btn allin-btn">
-                        <span class="btn-text">全押</span>
+                        <span class="btn-text">ALL IN</span>
+                        <span class="allin-fire">🔥</span>
                         <span class="btn-key">A</span>
                     </button>
                 </div>
@@ -268,6 +269,128 @@
         </div>
     </div>
     
+    <!-- 概率计算器小窗口 -->
+    <div id="odds-panel" class="odds-panel">
+        <div class="panel-header">
+            <span>📊 概率分析</span>
+            <button id="toggle-odds" class="toggle-panel-btn">−</button>
+        </div>
+        <div class="panel-content" id="odds-content">
+            <div class="odds-section">
+                <div class="odds-title">🎯 当前胜率</div>
+                <div class="win-probability">
+                    <span class="prob-value" id="win-prob">--</span>
+                    <span class="prob-label">%</span>
+                </div>
+                <div class="hand-category" id="hand-category">等待发牌...</div>
+            </div>
+            
+            <div class="odds-section">
+                <div class="odds-title">🃏 手牌强度</div>
+                <div class="hand-strength-bar">
+                    <div class="strength-fill" id="strength-fill"></div>
+                </div>
+                <div class="hand-key" id="hand-key">--</div>
+            </div>
+            
+            <div class="odds-section draws-section" id="draws-section">
+                <div class="odds-title">🎰 听牌分析</div>
+                <div class="draws-list" id="draws-list">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+            
+            <div class="odds-section">
+                <div class="odds-title">📈 牌型概率</div>
+                <div class="probabilities-list" id="probabilities-list">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 攻略建议面板 -->
+    <div id="strategy-panel" class="strategy-panel">
+        <div class="panel-header">
+            <span>💡 攻略建议</span>
+            <button id="toggle-strategy" class="toggle-panel-btn">−</button>
+        </div>
+        <div class="panel-content" id="strategy-content">
+            <div class="advice-action" id="advice-action">
+                <span class="advice-icon">🤔</span>
+                <span class="advice-text">等待游戏开始...</span>
+            </div>
+            <div class="advice-confidence" id="advice-confidence">
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidence-fill"></div>
+                </div>
+                <span class="confidence-text" id="confidence-text">置信度: --</span>
+            </div>
+            <div class="advice-reason" id="advice-reason">
+                分析原因将在这里显示
+            </div>
+            <div class="advice-details" id="advice-details">
+                <div class="details-title">💎 详细分析</div>
+                <ul id="details-list">
+                    <!-- 动态生成 -->
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 数据统计面板 -->
+    <div id="stats-panel" class="stats-panel">
+        <div class="panel-header">
+            <span>📋 数据面板</span>
+            <button id="toggle-stats" class="toggle-panel-btn">−</button>
+        </div>
+        <div class="panel-content" id="stats-content">
+            <div class="stats-grid">
+                <div class="stat-item pot-stat">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-label">底池总额</div>
+                        <div class="stat-value" id="stat-pot">0</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">📥</div>
+                    <div class="stat-info">
+                        <div class="stat-label">跟注需要</div>
+                        <div class="stat-value" id="stat-to-call">0</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <div class="stat-label">底池赔率</div>
+                        <div class="stat-value" id="stat-pot-odds">--</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-label">活跃玩家</div>
+                        <div class="stat-value" id="stat-active-players">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="players-chips-list">
+                <div class="chips-title">💎 各玩家筹码</div>
+                <div id="players-chips-list">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 工具栏按钮 -->
+    <div class="toolbar-buttons" id="toolbar-buttons">
+        <button class="toolbar-btn" id="show-odds-btn" title="概率计算器">📊</button>
+        <button class="toolbar-btn" id="show-strategy-btn" title="攻略建议">💡</button>
+        <button class="toolbar-btn" id="show-stats-btn" title="数据面板">📋</button>
+    </div>
+    
     <!-- 音频元素 -->
     <audio id="sound-deal" preload="auto"></audio>
     <audio id="sound-chips" preload="auto"></audio>
@@ -281,6 +404,7 @@
     <script src="js/handEvaluator.js"></script>
     <script src="js/player.js"></script>
     <script src="js/ai.js"></script>
+    <script src="js/oddsCalculator.js"></script>
     <script src="js/gameManager.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>

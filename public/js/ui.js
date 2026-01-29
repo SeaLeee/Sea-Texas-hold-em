@@ -13,6 +13,16 @@ class UI {
         // 下注滑块状态
         this.isRaiseMode = false;
         this.raiseAmount = 0;
+        
+        // 概率计算器
+        this.oddsCalculator = new OddsCalculator();
+        
+        // 面板状态
+        this.panelStates = {
+            odds: false,
+            strategy: false,
+            stats: false
+        };
     }
 
     /**
@@ -78,7 +88,39 @@ class UI {
             toggleLogBtn: document.getElementById('toggle-log'),
             
             // 菜单按钮
-            menuBtn: document.getElementById('menu-btn')
+            menuBtn: document.getElementById('menu-btn'),
+            
+            // 概率计算器面板
+            oddsPanel: document.getElementById('odds-panel'),
+            oddsToggleBtn: document.getElementById('toggle-odds-panel'),
+            winProbValue: document.getElementById('win-prob-value'),
+            handCategory: document.getElementById('hand-category'),
+            strengthFill: document.getElementById('strength-fill'),
+            handKey: document.getElementById('hand-key'),
+            drawsList: document.getElementById('draws-list'),
+            probsList: document.getElementById('probs-list'),
+            
+            // 攻略建议面板
+            strategyPanel: document.getElementById('strategy-panel'),
+            strategyToggleBtn: document.getElementById('toggle-strategy-panel'),
+            adviceIcon: document.getElementById('advice-icon'),
+            adviceText: document.getElementById('advice-text'),
+            confidenceFill: document.getElementById('confidence-fill'),
+            confidenceText: document.getElementById('confidence-text'),
+            adviceReason: document.getElementById('advice-reason'),
+            detailsList: document.getElementById('details-list'),
+            
+            // 数据统计面板
+            statsPanel: document.getElementById('stats-panel'),
+            statsToggleBtn: document.getElementById('toggle-stats-panel'),
+            statPot: document.getElementById('stat-pot'),
+            statCall: document.getElementById('stat-call'),
+            statMyChips: document.getElementById('stat-my-chips'),
+            statActivePlayers: document.getElementById('stat-active-players'),
+            playersChipsList: document.getElementById('players-chips-list'),
+            
+            // 工具栏按钮容器
+            toolbarButtons: document.querySelector('.toolbar-buttons')
         };
     }
 
@@ -267,6 +309,8 @@ class UI {
         this.elements.gameScreen.classList.add('active');
         this.elements.gameLog.classList.add('active');
         this.clearLog();
+        this.showToolbar();
+        this.initToolbarPanels();
     }
 
     /**
@@ -298,6 +342,9 @@ class UI {
 
         // 更新人类玩家区域
         this.updatePlayerControls(state);
+        
+        // 更新数据面板
+        this.updatePanelsData();
     }
 
     /**
@@ -790,5 +837,353 @@ class UI {
                 seat.classList.add('win-celebrate');
             }
         });
+    }
+
+    /**
+     * 初始化工具栏面板事件
+     */
+    initToolbarPanels() {
+        // 概率计算器面板切换
+        if (this.elements.oddsToggleBtn) {
+            this.elements.oddsToggleBtn.addEventListener('click', () => {
+                this.togglePanel('odds');
+            });
+        }
+        
+        // 攻略建议面板切换
+        if (this.elements.strategyToggleBtn) {
+            this.elements.strategyToggleBtn.addEventListener('click', () => {
+                this.togglePanel('strategy');
+            });
+        }
+        
+        // 数据统计面板切换
+        if (this.elements.statsToggleBtn) {
+            this.elements.statsToggleBtn.addEventListener('click', () => {
+                this.togglePanel('stats');
+            });
+        }
+        
+        // 面板内关闭按钮
+        document.querySelectorAll('.toggle-panel-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const panel = e.target.closest('.odds-panel, .strategy-panel, .stats-panel');
+                if (panel) {
+                    panel.classList.remove('active');
+                    // 更新对应工具栏按钮状态
+                    if (panel.classList.contains('odds-panel')) {
+                        this.panelStates.odds = false;
+                        this.elements.oddsToggleBtn?.classList.remove('active');
+                    } else if (panel.classList.contains('strategy-panel')) {
+                        this.panelStates.strategy = false;
+                        this.elements.strategyToggleBtn?.classList.remove('active');
+                    } else if (panel.classList.contains('stats-panel')) {
+                        this.panelStates.stats = false;
+                        this.elements.statsToggleBtn?.classList.remove('active');
+                    }
+                }
+            });
+        });
+        
+        // ALL IN 按钮点击动画
+        if (this.elements.allinBtn) {
+            this.elements.allinBtn.addEventListener('click', () => {
+                if (!this.elements.allinBtn.disabled) {
+                    this.elements.allinBtn.classList.add('clicked');
+                    setTimeout(() => {
+                        this.elements.allinBtn.classList.remove('clicked');
+                    }, 600);
+                }
+            });
+        }
+    }
+
+    /**
+     * 切换面板显示
+     * @param {string} panelType - 面板类型 ('odds' | 'strategy' | 'stats')
+     */
+    togglePanel(panelType) {
+        const panelMap = {
+            odds: { panel: this.elements.oddsPanel, btn: this.elements.oddsToggleBtn },
+            strategy: { panel: this.elements.strategyPanel, btn: this.elements.strategyToggleBtn },
+            stats: { panel: this.elements.statsPanel, btn: this.elements.statsToggleBtn }
+        };
+        
+        const { panel, btn } = panelMap[panelType];
+        
+        if (!panel) return;
+        
+        this.panelStates[panelType] = !this.panelStates[panelType];
+        
+        if (this.panelStates[panelType]) {
+            panel.classList.add('active');
+            btn?.classList.add('active');
+            // 打开面板时立即更新数据
+            this.updatePanelsData();
+        } else {
+            panel.classList.remove('active');
+            btn?.classList.remove('active');
+        }
+    }
+
+    /**
+     * 更新所有打开的面板数据
+     */
+    updatePanelsData() {
+        if (!this.gameState) return;
+        
+        const humanPlayer = this.gameState.players.find(p => p.isHuman);
+        if (!humanPlayer || humanPlayer.holeCards.length < 2) return;
+        
+        // 获取阶段名称
+        const phaseName = this.gameState.phaseName || 'Preflop';
+        
+        // 计算赔率和建议
+        const oddsInfo = this.oddsCalculator.calculateOdds(
+            humanPlayer.holeCards,
+            this.gameState.communityCards,
+            this.gameState.players.length
+        );
+        
+        const advice = this.oddsCalculator.getAdvice(
+            humanPlayer.holeCards,
+            this.gameState.communityCards,
+            this.gameState.pot,
+            this.gameState.currentBet - humanPlayer.currentBet,
+            humanPlayer.chips,
+            this.gameState.players.filter(p => p.canAct()).length
+        );
+        
+        // 更新概率计算器面板
+        if (this.panelStates.odds) {
+            this.updateOddsPanel(oddsInfo, phaseName);
+        }
+        
+        // 更新攻略建议面板
+        if (this.panelStates.strategy) {
+            this.updateStrategyPanel(advice);
+        }
+        
+        // 更新数据统计面板
+        if (this.panelStates.stats) {
+            this.updateStatsPanel(humanPlayer);
+        }
+    }
+
+    /**
+     * 更新概率计算器面板
+     * @param {Object} oddsInfo - 赔率信息
+     * @param {string} phaseName - 阶段名称
+     */
+    updateOddsPanel(oddsInfo, phaseName) {
+        // 胜率
+        if (this.elements.winProbValue) {
+            this.elements.winProbValue.textContent = Math.round(oddsInfo.winProbability);
+        }
+        
+        // 当前牌型
+        if (this.elements.handCategory) {
+            this.elements.handCategory.textContent = oddsInfo.currentHand || '等待发牌';
+        }
+        
+        // 手牌强度条
+        if (this.elements.strengthFill) {
+            this.elements.strengthFill.style.width = `${oddsInfo.handStrength}%`;
+        }
+        
+        // 手牌表示
+        if (this.elements.handKey) {
+            this.elements.handKey.textContent = oddsInfo.handKey || '';
+        }
+        
+        // 听牌列表
+        if (this.elements.drawsList) {
+            this.elements.drawsList.innerHTML = '';
+            
+            if (oddsInfo.draws && oddsInfo.draws.length > 0) {
+                oddsInfo.draws.forEach(draw => {
+                    const item = document.createElement('div');
+                    item.className = 'draw-item';
+                    item.innerHTML = `
+                        <span class="draw-name">${draw.name}</span>
+                        <span class="draw-outs">${draw.outs} outs (${draw.probability}%)</span>
+                    `;
+                    this.elements.drawsList.appendChild(item);
+                });
+            } else {
+                const noDraws = document.createElement('div');
+                noDraws.className = 'draw-item';
+                noDraws.innerHTML = `<span class="draw-name">无明显听牌</span>`;
+                this.elements.drawsList.appendChild(noDraws);
+            }
+        }
+        
+        // 各牌型概率
+        if (this.elements.probsList) {
+            this.elements.probsList.innerHTML = '';
+            
+            const handTypes = [
+                { name: '皇家同花顺', achieved: oddsInfo.handRank === 9 },
+                { name: '同花顺', achieved: oddsInfo.handRank === 8 },
+                { name: '四条', achieved: oddsInfo.handRank === 7 },
+                { name: '葫芦', achieved: oddsInfo.handRank === 6 },
+                { name: '同花', achieved: oddsInfo.handRank === 5 },
+                { name: '顺子', achieved: oddsInfo.handRank === 4 },
+                { name: '三条', achieved: oddsInfo.handRank === 3 },
+                { name: '两对', achieved: oddsInfo.handRank === 2 },
+                { name: '一对', achieved: oddsInfo.handRank === 1 },
+                { name: '高牌', achieved: oddsInfo.handRank === 0 }
+            ];
+            
+            handTypes.forEach(ht => {
+                const item = document.createElement('div');
+                item.className = `prob-item ${ht.achieved ? 'achieved' : ''}`;
+                item.innerHTML = `
+                    <span class="prob-name">${ht.name}</span>
+                    <span class="prob-percent">${ht.achieved ? '✓' : '-'}</span>
+                `;
+                this.elements.probsList.appendChild(item);
+            });
+        }
+    }
+
+    /**
+     * 更新攻略建议面板
+     * @param {Object} advice - 建议信息
+     */
+    updateStrategyPanel(advice) {
+        // 建议图标
+        const iconMap = {
+            'FOLD': '🚫',
+            'CHECK': '✋',
+            'CALL': '📞',
+            'RAISE': '💪',
+            'ALLIN': '🔥'
+        };
+        
+        if (this.elements.adviceIcon) {
+            this.elements.adviceIcon.textContent = iconMap[advice.action] || '🤔';
+        }
+        
+        // 建议动作文本
+        const actionTextMap = {
+            'FOLD': '弃牌',
+            'CHECK': '过牌',
+            'CALL': '跟注',
+            'RAISE': '加注',
+            'ALLIN': 'ALL IN'
+        };
+        
+        if (this.elements.adviceText) {
+            this.elements.adviceText.textContent = actionTextMap[advice.action] || advice.action;
+        }
+        
+        // 置信度
+        if (this.elements.confidenceFill) {
+            this.elements.confidenceFill.style.width = `${advice.confidence}%`;
+        }
+        
+        if (this.elements.confidenceText) {
+            let confidenceLevel = '低';
+            if (advice.confidence >= 80) confidenceLevel = '非常高';
+            else if (advice.confidence >= 60) confidenceLevel = '高';
+            else if (advice.confidence >= 40) confidenceLevel = '中等';
+            this.elements.confidenceText.textContent = `置信度: ${confidenceLevel} (${advice.confidence}%)`;
+        }
+        
+        // 原因
+        if (this.elements.adviceReason) {
+            this.elements.adviceReason.textContent = advice.reason || '根据当前牌局情况分析';
+        }
+        
+        // 详细信息
+        if (this.elements.detailsList) {
+            this.elements.detailsList.innerHTML = '';
+            
+            if (advice.details && advice.details.length > 0) {
+                advice.details.forEach(detail => {
+                    const li = document.createElement('li');
+                    li.textContent = detail;
+                    this.elements.detailsList.appendChild(li);
+                });
+            }
+        }
+    }
+
+    /**
+     * 更新数据统计面板
+     * @param {Player} humanPlayer - 人类玩家
+     */
+    updateStatsPanel(humanPlayer) {
+        // 底池金额
+        if (this.elements.statPot) {
+            this.elements.statPot.textContent = this.formatNumber(this.gameState.pot);
+        }
+        
+        // 需要跟注金额
+        if (this.elements.statCall) {
+            const toCall = this.gameState.currentBet - humanPlayer.currentBet;
+            this.elements.statCall.textContent = this.formatNumber(Math.max(0, toCall));
+        }
+        
+        // 我的筹码
+        if (this.elements.statMyChips) {
+            this.elements.statMyChips.textContent = this.formatNumber(humanPlayer.chips);
+        }
+        
+        // 活跃玩家数
+        if (this.elements.statActivePlayers) {
+            const activePlayers = this.gameState.players.filter(p => p.canAct()).length;
+            this.elements.statActivePlayers.textContent = activePlayers;
+        }
+        
+        // 各玩家筹码列表
+        if (this.elements.playersChipsList) {
+            this.elements.playersChipsList.innerHTML = '';
+            
+            this.gameState.players.forEach(player => {
+                const item = document.createElement('div');
+                item.className = 'player-chip-item';
+                
+                if (player.isHuman) {
+                    item.classList.add('is-human');
+                }
+                if (player.status === PLAYER_STATUS.FOLDED) {
+                    item.classList.add('is-folded');
+                }
+                
+                const statusBadge = player.status === PLAYER_STATUS.ALLIN ? ' [ALL IN]' :
+                                   player.status === PLAYER_STATUS.FOLDED ? ' [弃牌]' : '';
+                
+                item.innerHTML = `
+                    <span>${player.name}${statusBadge}</span>
+                    <span>💰 ${this.formatNumber(player.chips)}</span>
+                `;
+                this.elements.playersChipsList.appendChild(item);
+            });
+        }
+    }
+
+    /**
+     * 显示工具栏
+     */
+    showToolbar() {
+        if (this.elements.toolbarButtons) {
+            this.elements.toolbarButtons.style.display = 'flex';
+        }
+    }
+
+    /**
+     * 隐藏工具栏
+     */
+    hideToolbar() {
+        if (this.elements.toolbarButtons) {
+            this.elements.toolbarButtons.style.display = 'none';
+        }
+        // 关闭所有面板
+        this.elements.oddsPanel?.classList.remove('active');
+        this.elements.strategyPanel?.classList.remove('active');
+        this.elements.statsPanel?.classList.remove('active');
+        this.panelStates = { odds: false, strategy: false, stats: false };
     }
 }
