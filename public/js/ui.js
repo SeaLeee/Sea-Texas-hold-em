@@ -1139,23 +1139,46 @@ class UI {
      * 初始化工具栏面板事件
      */
     initToolbarPanels() {
+        // 重新获取工具栏按钮引用（确保DOM已加载）
+        const oddsBtn = document.getElementById('show-odds-btn');
+        const strategyBtn = document.getElementById('show-strategy-btn');
+        const statsBtn = document.getElementById('show-stats-btn');
+        
+        // 更新缓存的元素引用
+        if (oddsBtn) this.elements.oddsToggleBtn = oddsBtn;
+        if (strategyBtn) this.elements.strategyToggleBtn = strategyBtn;
+        if (statsBtn) this.elements.statsToggleBtn = statsBtn;
+        
         // 概率计算器面板切换
-        if (this.elements.oddsToggleBtn) {
-            this.elements.oddsToggleBtn.addEventListener('click', () => {
+        if (oddsBtn) {
+            // 移除旧监听器（如果有）
+            oddsBtn.replaceWith(oddsBtn.cloneNode(true));
+            const newOddsBtn = document.getElementById('show-odds-btn');
+            this.elements.oddsToggleBtn = newOddsBtn;
+            newOddsBtn.addEventListener('click', () => {
+                console.log('概率计算器按钮被点击');
                 this.togglePanel('odds');
             });
         }
         
         // 攻略建议面板切换
-        if (this.elements.strategyToggleBtn) {
-            this.elements.strategyToggleBtn.addEventListener('click', () => {
+        if (strategyBtn) {
+            strategyBtn.replaceWith(strategyBtn.cloneNode(true));
+            const newStrategyBtn = document.getElementById('show-strategy-btn');
+            this.elements.strategyToggleBtn = newStrategyBtn;
+            newStrategyBtn.addEventListener('click', () => {
+                console.log('攻略建议按钮被点击');
                 this.togglePanel('strategy');
             });
         }
         
         // 数据统计面板切换
-        if (this.elements.statsToggleBtn) {
-            this.elements.statsToggleBtn.addEventListener('click', () => {
+        if (statsBtn) {
+            statsBtn.replaceWith(statsBtn.cloneNode(true));
+            const newStatsBtn = document.getElementById('show-stats-btn');
+            this.elements.statsToggleBtn = newStatsBtn;
+            newStatsBtn.addEventListener('click', () => {
+                console.log('数据统计按钮被点击');
                 this.togglePanel('stats');
             });
         }
