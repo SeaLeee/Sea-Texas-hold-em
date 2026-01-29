@@ -114,7 +114,8 @@ const AI_PERSONALITY = {
     CONSERVATIVE: 'conservative',  // 保守型 - 紧凶
     BALANCED: 'balanced',          // 平衡型 - 标准TAG
     AGGRESSIVE: 'aggressive',      // 激进型 - 松凶
-    MANIAC: 'maniac'              // 疯狂型 - 超激进
+    MANIAC: 'maniac',             // 疯狂型 - 超激进
+    MATHEMATICIAN: 'mathematician' // 数学家型 - 纯概率计算
 };
 
 // 性格显示名称
@@ -122,38 +123,60 @@ const PERSONALITY_NAMES = {
     [AI_PERSONALITY.CONSERVATIVE]: '🛡️ 保守型',
     [AI_PERSONALITY.BALANCED]: '⚖️ 平衡型',
     [AI_PERSONALITY.AGGRESSIVE]: '🔥 激进型',
-    [AI_PERSONALITY.MANIAC]: '💀 疯狂型'
+    [AI_PERSONALITY.MANIAC]: '💀 疯狂型',
+    [AI_PERSONALITY.MATHEMATICIAN]: '🧮 数学家型'
 };
 
-// 性格参数配置
+// 性格参数配置 - 增强版：更难对付，不轻易弃牌
 const PERSONALITY_CONFIG = {
     [AI_PERSONALITY.CONSERVATIVE]: {
-        vpip: 0.15,        // 入池率
-        pfr: 0.10,         // 翻前加注率
-        aggression: 0.3,   // 激进度
-        bluffFreq: 0.05,   // 诈唬频率
-        foldToPressure: 0.7 // 面对压力弃牌率
+        vpip: 0.22,        // 入池率（提高入池率）
+        pfr: 0.15,         // 翻前加注率
+        aggression: 0.45,  // 激进度（提高）
+        bluffFreq: 0.12,   // 诈唬频率（增加诈唬）
+        foldToPressure: 0.45, // 面对压力弃牌率（大幅降低弃牌率）
+        callDown: 0.6,     // 跟注到底的意愿
+        trapFreq: 0.25     // 陷阱打法频率
     },
     [AI_PERSONALITY.BALANCED]: {
-        vpip: 0.25,
-        pfr: 0.18,
-        aggression: 0.5,
-        bluffFreq: 0.15,
-        foldToPressure: 0.5
+        vpip: 0.32,
+        pfr: 0.24,
+        aggression: 0.65,
+        bluffFreq: 0.22,
+        foldToPressure: 0.30, // 大幅降低弃牌率
+        callDown: 0.70,
+        trapFreq: 0.30
     },
     [AI_PERSONALITY.AGGRESSIVE]: {
-        vpip: 0.35,
-        pfr: 0.28,
-        aggression: 0.7,
-        bluffFreq: 0.25,
-        foldToPressure: 0.3
+        vpip: 0.42,
+        pfr: 0.35,
+        aggression: 0.82,
+        bluffFreq: 0.35,
+        foldToPressure: 0.18, // 几乎不弃牌
+        callDown: 0.80,
+        trapFreq: 0.35
     },
     [AI_PERSONALITY.MANIAC]: {
-        vpip: 0.50,
-        pfr: 0.40,
-        aggression: 0.9,
-        bluffFreq: 0.40,
-        foldToPressure: 0.15
+        vpip: 0.58,
+        pfr: 0.48,
+        aggression: 0.95,
+        bluffFreq: 0.50,
+        foldToPressure: 0.08, // 极少弃牌
+        callDown: 0.90,
+        trapFreq: 0.40
+    },
+    // 数学家型 - 纯概率计算，完全基于EV决策
+    [AI_PERSONALITY.MATHEMATICIAN]: {
+        vpip: 0.28,          // 中等入池率，只打正EV的牌
+        pfr: 0.22,           // 中等加注率
+        aggression: 0.60,    // 中等激进度
+        bluffFreq: 0.18,     // 平衡的诈唬频率
+        foldToPressure: 0.35,// 根据EV决定，不会盲目跟注
+        callDown: 0.65,      // 基于概率决定
+        trapFreq: 0.20,      // 有策略地慢打
+        useMathMode: true,   // 启用纯数学模式
+        evThreshold: 0.05,   // EV阈值，高于此值才行动
+        potOddsStrict: true  // 严格遵循底池赔率
     }
 };
 
@@ -182,7 +205,8 @@ const PERSONALITY_ANIMALS = {
     [AI_PERSONALITY.CONSERVATIVE]: { emoji: '🐢', label: '乌龟', desc: '稳如老龟，耐心等待' },
     [AI_PERSONALITY.BALANCED]: { emoji: '🦊', label: '狐狸', desc: '狡猾如狐，伺机而动' },
     [AI_PERSONALITY.AGGRESSIVE]: { emoji: '🐅', label: '老虎', desc: '凶猛如虎，步步紧逼' },
-    [AI_PERSONALITY.MANIAC]: { emoji: '🦁', label: '狮子', desc: '狂野如狮，不计后果' }
+    [AI_PERSONALITY.MANIAC]: { emoji: '🦁', label: '狮子', desc: '狂野如狮，不计后果' },
+    [AI_PERSONALITY.MATHEMATICIAN]: { emoji: '🦉', label: '猫头鹰', desc: '智慧如鹰，精算概率' }
 };
 
 // 预设小伙伴角色
@@ -365,6 +389,27 @@ const PRESET_BUDDIES = {
             bluff: ['喵？你确定？', '猜猜我有什么~', '喵嘿嘿~'],
             allIn: ['拼了喵！', '喵喵冲锋！', '今天要赢喵！'],
             taunt: ['喵~菜鸡~', '太弱了喵~', '你是小鱼干吗？']
+        }
+    },
+    // 数学家专家NPC - 总是参与游戏
+    einstein: {
+        id: 'einstein',
+        name: '爱因斯坦',
+        avatar: '🧠',
+        personality: AI_PERSONALITY.MATHEMATICIAN,
+        personalityAnimal: PERSONALITY_ANIMALS[AI_PERSONALITY.MATHEMATICIAN],
+        difficulty: AI_DIFFICULTY.HARD,
+        description: '德扑数学家，完全靠概率和EV计算',
+        style: '🦉 概率计算型',
+        isExpert: true, // 标记为专家，总是参与游戏
+        dialogues: {
+            join: '让数学来说话。',
+            win: ['概率站在我这边。', 'EV正收益。', '数学永远不会骗人。'],
+            lose: ['长期EV依然为正。', '方差的正常波动。', '概率需要样本量。'],
+            bluff: ['这手牌的诈唬频率应为18.5%', '平衡范围需要适度诈唬', '根据GTO理论...'],
+            allIn: ['pot odds支持全押。', 'SPR过低，简化决策。', 'EV计算完毕，全押正收益。'],
+            taunt: ['你的打法-EV。', '这个决策数学上是错误的。', '建议复习一下底池赔率。'],
+            thinking: ['计算中...', '分析对手范围...', '评估pot odds...', 'EV = equity × pot - (1-equity) × call...']
         }
     }
 };

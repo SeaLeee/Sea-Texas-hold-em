@@ -111,6 +111,13 @@ class AI {
         // 添加一些随机性（模拟真人的不确定性）
         const randomNoise = this.getRandomNoise();
         
+        // 数学家模式：完全基于EV和概率计算
+        if (this.config.useMathMode) {
+            const decision = this.makeMathematicianDecision(player, availableActions, decisionFactors, gameState);
+            this.recordAction(player, decision, decisionFactors);
+            return decision;
+        }
+        
         // 根据难度选择决策策略
         let decision;
         switch (this.difficulty) {
@@ -455,11 +462,17 @@ class AI {
     }
 
     /**
-     * 翻牌后决策
+     * 翻牌后决策 - 增强版：更难对付，不轻易弃牌
      */
     makePostflopDecision(player, actions, factors, gameState, adjustedEquity) {
-        const { handStrength, potOdds, toCall, drawPotential } = factors;
+        const { handStrength, potOdds, toCall, drawPotential, positionStrength } = factors;
         const { bigBlind, pot } = gameState;
+        
+        // 计算弃牌抵抗力（基于性格的foldToPressure）
+        const foldResistance = 1 - this.config.foldToPressure;
+        
+        // 分析对手行为：玩家加注是否可能是诈唬
+        const isPlayerBluffing = this.detectPlayerBluff(gameState, factors);
         
         // 诈唬判断
         if (handStrength < 0.25 && this.shouldBluff(factors, gameState)) {
@@ -469,34 +482,94 @@ class AI {
             }
         }
         
-        // 弱牌处理
-        if (adjustedEquity < 0.25) {
-            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
-            return { action: ACTIONS.FOLD };
-        }
+        // 弱牌处理 - 大幅降低弃牌率
+        // 原来是0.25就弃牌，现在根据性格和玩家行为动态调整
+        const foldThreshold = 0.12 - (foldResistance * 0.06); // 最低0.06，最高0.12
         
-        // 边缘牌：根据底池赔率决定
-        if (adjustedEquity < 0.45) {
-            if (toCall === 0 && actions[ACTIONS.CHECK]) {
-                return { action: ACTIONS.CHECK };
+        if (adjustedEquity < foldThreshold) {
+            // 即使是弱牌，也有一定概率跟注（抓诈唬）
+            if (isPlayerBluffing && Math.random() < 0.4 + foldResistance * 0.3) {
+                if (actions[ACTIONS.CALL]) {
+                    console.log(`[AI ${player.name}] 识别到玩家可能诈唬，决定跟注抓鸡`);
+                    return { action: ACTIONS.CALL };
+                }
             }
-            if (adjustedEquity > potOdds && actions[ACTIONS.CALL]) {
+            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+            // 面对大额加注，根据性格决定是否弃牌
+            if (toCall > pot * 0.5 && Math.random() < this.config.foldToPressure * 0.5) {
+                return { action: ACTIONS.FOLD };
+            }
+            // 小额跟注
+            if (toCall <= bigBlind * 3 && actions[ACTIONS.CALL]) {
                 return { action: ACTIONS.CALL };
             }
             return { action: ACTIONS.FOLD };
         }
         
-        // 中等牌
-        if (adjustedEquity < 0.65) {
-            if (actions[ACTIONS.RAISE] && Math.random() < this.config.aggression) {
-                const raiseAmount = this.calculateRaiseAmount(actions, factors, gameState, 0.5);
+        // 边缘牌：更激进处理
+        if (adjustedEquity < 0.35) {
+            if (toCall === 0 && actions[ACTIONS.CHECK]) {
+                // 有一定概率探针下注
+                if (Math.random() < this.config.aggression * 0.4 && actions[ACTIONS.RAISE]) {
+                    const probeSize = Math.floor(pot * 0.35);
+                    return { action: ACTIONS.RAISE, amount: Math.min(probeSize, actions[ACTIONS.RAISE].max) };
+                }
+                return { action: ACTIONS.CHECK };
+            }
+            // 提高跟注意愿
+            if (adjustedEquity > potOdds * 0.7 && actions[ACTIONS.CALL]) {
+                return { action: ACTIONS.CALL };
+            }
+            // 检测诈唬时更愿意跟注
+            if (isPlayerBluffing && actions[ACTIONS.CALL]) {
+                return { action: ACTIONS.CALL };
+            }
+            // 小额跟注不轻易弃牌
+            if (toCall <= bigBlind * 4 && actions[ACTIONS.CALL]) {
+                return { action: ACTIONS.CALL };
+            }
+            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+            // 只有面对大额加注才考虑弃牌
+            if (toCall > pot * 0.7) {
+                return { action: ACTIONS.FOLD };
+            }
+            if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
+            return { action: ACTIONS.FOLD };
+        }
+        
+        // 中等牌 - 更激进
+        if (adjustedEquity < 0.55) {
+            // 提高加注频率
+            if (actions[ACTIONS.RAISE] && Math.random() < this.config.aggression * 1.2) {
+                const raiseAmount = this.calculateRaiseAmount(actions, factors, gameState, 0.6);
                 return { action: ACTIONS.RAISE, amount: raiseAmount };
             }
             if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
             if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
         }
         
-        // 强牌：价值下注
+        // 较强牌 - 偶尔慢打设陷阱
+        if (adjustedEquity < 0.75) {
+            // 20%概率慢打
+            if (Math.random() < 0.2 && positionStrength > 0.5) {
+                if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+                if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
+            }
+            if (actions[ACTIONS.RAISE]) {
+                const raiseAmount = this.calculateValueBet(actions, factors, gameState, adjustedEquity);
+                return { action: ACTIONS.RAISE, amount: raiseAmount };
+            }
+            if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
+            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+        }
+        
+        // 强牌：价值最大化，偶尔慢打
+        if (Math.random() < 0.15) {
+            // 15%概率慢打诱导对手加注
+            if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
+            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+        }
+        
         if (actions[ACTIONS.RAISE]) {
             const raiseAmount = this.calculateValueBet(actions, factors, gameState, adjustedEquity);
             return { action: ACTIONS.RAISE, amount: raiseAmount };
@@ -505,6 +578,28 @@ class AI {
         if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
         if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
         return { action: ACTIONS.FOLD };
+    }
+
+    /**
+     * 检测玩家是否在诈唬
+     */
+    detectPlayerBluff(gameState, factors) {
+        const { toCall, pot, phase } = { ...gameState, ...factors };
+        
+        // 玩家加注过大可能是诈唬
+        if (toCall > pot * 0.8) {
+            return Math.random() < 0.4; // 40%概率认为是诈唬
+        }
+        
+        // 河牌圈突然大额加注
+        if (factors.phase === GAME_PHASES.RIVER && toCall > pot * 0.6) {
+            return Math.random() < 0.35;
+        }
+        
+        // 之前一直check突然加注
+        // 这里可以添加更多行为分析逻辑
+        
+        return Math.random() < 0.2; // 基础20%诈唬概率
     }
 
     /**
@@ -563,21 +658,50 @@ class AI {
     }
 
     /**
-     * 高级翻牌后决策（困难AI）
+     * 高级翻牌后决策（困难AI）- 增强版：更多高级策略
      */
     makeAdvancedPostflopDecision(player, actions, factors, gameState, adjustedEquity, callEV) {
         const { handStrength, potOdds, toCall, positionStrength, drawPotential, phase } = factors;
-        const { pot } = gameState;
+        const { pot, bigBlind } = gameState;
         
-        // 坚果牌处理
+        // 计算弃牌抵抗力
+        const foldResistance = 1 - this.config.foldToPressure;
+        
+        // 检测玩家诈唬
+        const isPlayerBluffing = this.detectPlayerBluff(gameState, factors);
+        
+        // 坚果牌处理 - 更多陷阱策略
         if (handStrength >= 0.85) {
-            return this.handleNutsHand(player, actions, factors, gameState);
+            return this.handleNutsHandAdvanced(player, actions, factors, gameState);
         }
         
-        // 半诈唬（有听牌的情况）
-        if (drawPotential > 0.2 && handStrength < 0.4) {
-            if (actions[ACTIONS.RAISE] && Math.random() < this.config.aggression) {
-                const semiBluff = pot * 0.6;
+        // 强牌陷阱（check-raise）
+        if (handStrength >= 0.65 && toCall === 0) {
+            const trapChance = this.config.trapFreq || 0.3;
+            if (Math.random() < trapChance && actions[ACTIONS.CHECK]) {
+                console.log(`[AI ${player.name}] 设置check-raise陷阱`);
+                // 标记准备check-raise
+                player._checkRaiseReady = true;
+                return { action: ACTIONS.CHECK };
+            }
+        }
+        
+        // 执行check-raise
+        if (player._checkRaiseReady && toCall > 0 && actions[ACTIONS.RAISE]) {
+            player._checkRaiseReady = false;
+            const checkRaiseSize = Math.floor(toCall * 3 + pot * 0.5);
+            console.log(`[AI ${player.name}] 执行check-raise!`);
+            return { 
+                action: ACTIONS.RAISE, 
+                amount: Math.min(checkRaiseSize, actions[ACTIONS.RAISE].max)
+            };
+        }
+        
+        // 半诈唬（有听牌的情况）- 更激进
+        if (drawPotential > 0.15 && handStrength < 0.45) {
+            if (actions[ACTIONS.RAISE] && Math.random() < this.config.aggression * 1.2) {
+                const semiBluff = pot * (0.5 + this.config.aggression * 0.3);
+                console.log(`[AI ${player.name}] 半诈唬加注`);
                 return { 
                     action: ACTIONS.RAISE, 
                     amount: Math.min(Math.floor(semiBluff), actions[ACTIONS.RAISE].max)
@@ -585,22 +709,54 @@ class AI {
             }
         }
         
-        // EV正的情况下跟注
-        if (callEV > 0 && adjustedEquity > potOdds) {
+        // 反诈唬（识别到玩家诈唬时反击）
+        if (isPlayerBluffing && handStrength > 0.3) {
+            if (actions[ACTIONS.RAISE] && Math.random() < 0.5 + foldResistance * 0.3) {
+                const counterBluff = Math.floor(toCall * 2.5 + pot * 0.4);
+                console.log(`[AI ${player.name}] 识别诈唬，反加注`);
+                return { 
+                    action: ACTIONS.RAISE, 
+                    amount: Math.min(counterBluff, actions[ACTIONS.RAISE].max)
+                };
+            }
+            // 至少跟注抓诈唬
+            if (actions[ACTIONS.CALL]) {
+                console.log(`[AI ${player.name}] 识别诈唬，跟注抓鸡`);
+                return { action: ACTIONS.CALL };
+            }
+        }
+        
+        // EV正的情况下跟注 - 降低弃牌率
+        if (callEV > -bigBlind * 2 && adjustedEquity > potOdds * 0.7) {
             if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
         }
         
-        // 价值下注
-        if (adjustedEquity > 0.55 && actions[ACTIONS.RAISE]) {
+        // 价值下注 - 更激进
+        if (adjustedEquity > 0.45 && actions[ACTIONS.RAISE]) {
             const betSize = this.calculateOptimalBetSize(adjustedEquity, pot, actions);
             return { action: ACTIONS.RAISE, amount: betSize };
+        }
+        
+        // 中等牌力 - 不轻易弃牌
+        if (adjustedEquity > 0.25) {
+            if (toCall <= bigBlind * 5 && actions[ACTIONS.CALL]) {
+                return { action: ACTIONS.CALL };
+            }
+            // 小额探针下注
+            if (toCall === 0 && actions[ACTIONS.RAISE] && Math.random() < this.config.aggression) {
+                const probeSize = pot * 0.35;
+                return { 
+                    action: ACTIONS.RAISE, 
+                    amount: Math.min(Math.floor(probeSize), actions[ACTIONS.RAISE].max)
+                };
+            }
         }
         
         // 过牌/跟注
         if (toCall === 0 && actions[ACTIONS.CHECK]) {
             // 后位考虑下注
-            if (positionStrength > 0.7 && handStrength > 0.35 && actions[ACTIONS.RAISE]) {
-                const probeSize = pot * 0.4;
+            if (positionStrength > 0.6 && handStrength > 0.30 && actions[ACTIONS.RAISE]) {
+                const probeSize = pot * 0.45;
                 return { 
                     action: ACTIONS.RAISE, 
                     amount: Math.min(Math.floor(probeSize), actions[ACTIONS.RAISE].max)
@@ -609,10 +765,78 @@ class AI {
             return { action: ACTIONS.CHECK };
         }
         
+        // 弱牌但小额跟注
+        if (toCall <= bigBlind * 3 && actions[ACTIONS.CALL]) {
+            return { action: ACTIONS.CALL };
+        }
+        
         if (adjustedEquity > potOdds && actions[ACTIONS.CALL]) {
             return { action: ACTIONS.CALL };
         }
         
+        if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+        
+        // 只有面对超大加注才弃牌
+        if (toCall > pot * 0.8) {
+            return { action: ACTIONS.FOLD };
+        }
+        
+        if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
+        return { action: ACTIONS.FOLD };
+    }
+
+    /**
+     * 处理坚果牌 - 高级版，更多陷阱
+     */
+    handleNutsHandAdvanced(player, actions, factors, gameState) {
+        const { positionStrength, phase, toCall } = factors;
+        const { pot } = gameState;
+        
+        // 河牌阶段 - 最大化价值
+        if (phase === GAME_PHASES.RIVER) {
+            // 如果对手已经下注，考虑超额加注
+            if (toCall > 0 && actions[ACTIONS.RAISE]) {
+                const overbet = Math.floor(pot * 1.2 + toCall);
+                console.log(`[AI ${player.name}] 河牌坚果牌，超额加注`);
+                return { 
+                    action: ACTIONS.RAISE, 
+                    amount: Math.min(overbet, actions[ACTIONS.RAISE].max)
+                };
+            }
+            // 河牌无人下注，大额价值下注
+            if (actions[ACTIONS.RAISE]) {
+                const valueBet = Math.floor(pot * 0.85);
+                return { 
+                    action: ACTIONS.RAISE, 
+                    amount: Math.min(Math.max(valueBet, actions[ACTIONS.RAISE].min), actions[ACTIONS.RAISE].max)
+                };
+            }
+        }
+        
+        // 翻牌/转牌 - 偶尔慢打
+        if (Math.random() < 0.3) {
+            // 30%概率慢打
+            if (toCall > 0 && actions[ACTIONS.CALL]) {
+                console.log(`[AI ${player.name}] 坚果牌慢打，跟注`);
+                return { action: ACTIONS.CALL };
+            }
+            if (actions[ACTIONS.CHECK]) {
+                console.log(`[AI ${player.name}] 坚果牌慢打，过牌`);
+                return { action: ACTIONS.CHECK };
+            }
+        }
+        
+        // 标准价值加注
+        if (actions[ACTIONS.RAISE]) {
+            const betMultiplier = 0.6 + Math.random() * 0.2;
+            const betSize = Math.floor(pot * betMultiplier);
+            return { 
+                action: ACTIONS.RAISE, 
+                amount: Math.min(Math.max(betSize, actions[ACTIONS.RAISE].min), actions[ACTIONS.RAISE].max)
+            };
+        }
+        
+        if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
         if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
         return { action: ACTIONS.FOLD };
     }
@@ -836,5 +1060,301 @@ class AI {
             personalityName: PERSONALITY_NAMES[this.personality],
             config: this.config
         };
+    }
+
+    // =====================================================
+    // 数学家模式 - 完全基于概率和EV计算的决策系统
+    // =====================================================
+
+    /**
+     * 数学家型AI决策 - 完全基于数学概率
+     * 核心公式：EV = (Equity × Pot) - ((1 - Equity) × Call)
+     * 只在EV为正时行动
+     */
+    makeMathematicianDecision(player, actions, factors, gameState) {
+        const { phase } = gameState;
+        
+        console.log(`[🧠 数学家] 开始计算...`);
+        
+        // 翻牌前使用起手牌概率表
+        if (phase === GAME_PHASES.PREFLOP) {
+            return this.mathPreflopDecision(player, actions, factors, gameState);
+        }
+        
+        // 翻牌后使用精确EV计算
+        return this.mathPostflopDecision(player, actions, factors, gameState);
+    }
+
+    /**
+     * 数学家翻牌前决策
+     * 基于起手牌胜率表和底池赔率
+     */
+    mathPreflopDecision(player, actions, factors, gameState) {
+        const { toCall, positionStrength } = factors;
+        const { bigBlind, pot, activePlayers } = gameState;
+        
+        const preflopScore = this.getPreflopScore(player.holeCards);
+        
+        // 计算起手牌对应的胜率（基于起手牌表）
+        // AA = 85%, KK = 82%, QQ = 80%, AKs = 67%, etc.
+        const preflopEquity = this.getPreflopEquity(preflopScore, activePlayers);
+        
+        console.log(`[🧠 数学家] 起手牌评分: ${preflopScore}/20, 预估胜率: ${(preflopEquity * 100).toFixed(1)}%`);
+        
+        // 计算底池赔率
+        const potOdds = toCall > 0 ? toCall / (pot + toCall) : 0;
+        
+        // EV计算: EV = equity × (pot + toCall) - (1 - equity) × toCall
+        const callEV = this.calculatePreciseEV(preflopEquity, pot, toCall);
+        
+        console.log(`[🧠 数学家] Pot Odds: ${(potOdds * 100).toFixed(1)}%, Call EV: ${callEV.toFixed(2)}`);
+        
+        // 无需跟注的情况
+        if (toCall === 0) {
+            // 只有正EV的牌才开池加注
+            const openRaiseEV = this.calculateOpenRaiseEV(preflopEquity, pot, bigBlind, activePlayers);
+            
+            if (openRaiseEV > this.config.evThreshold && preflopScore >= 8 && actions[ACTIONS.RAISE]) {
+                // 数学最优加注尺寸: 2.5-3x BB
+                const raiseSize = Math.floor(bigBlind * (2.5 + positionStrength * 0.5));
+                console.log(`[🧠 数学家] 开池加注EV为正 (${openRaiseEV.toFixed(2)}), 加注 ${raiseSize}`);
+                return { 
+                    action: ACTIONS.RAISE, 
+                    amount: Math.min(Math.max(raiseSize, actions[ACTIONS.RAISE].min), actions[ACTIONS.RAISE].max)
+                };
+            }
+            
+            if (actions[ACTIONS.CHECK]) {
+                console.log(`[🧠 数学家] 免费看牌，过牌`);
+                return { action: ACTIONS.CHECK };
+            }
+        }
+        
+        // 面对加注：严格按照底池赔率
+        if (this.config.potOddsStrict) {
+            // 需要的胜率 = 跟注额 / (底池 + 跟注额)
+            const requiredEquity = potOdds;
+            
+            if (preflopEquity >= requiredEquity * 1.1) { // 10%安全边际
+                // 超强牌考虑3-bet
+                if (preflopScore >= 16 && callEV > bigBlind * 3 && actions[ACTIONS.RAISE]) {
+                    const threeBetSize = Math.floor(toCall * 3 + bigBlind);
+                    console.log(`[🧠 数学家] 超强牌，3-bet 到 ${threeBetSize}`);
+                    return { 
+                        action: ACTIONS.RAISE, 
+                        amount: Math.min(threeBetSize, actions[ACTIONS.RAISE].max)
+                    };
+                }
+                
+                if (actions[ACTIONS.CALL]) {
+                    console.log(`[🧠 数学家] 胜率 ${(preflopEquity * 100).toFixed(1)}% > 需要 ${(requiredEquity * 100).toFixed(1)}%, 跟注`);
+                    return { action: ACTIONS.CALL };
+                }
+            } else {
+                console.log(`[🧠 数学家] 胜率 ${(preflopEquity * 100).toFixed(1)}% < 需要 ${(requiredEquity * 100).toFixed(1)}%, 弃牌`);
+                if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+                return { action: ACTIONS.FOLD };
+            }
+        }
+        
+        if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+        return { action: ACTIONS.FOLD };
+    }
+
+    /**
+     * 数学家翻牌后决策
+     * 完全基于手牌强度、底池赔率和隐含赔率
+     */
+    mathPostflopDecision(player, actions, factors, gameState) {
+        const { handStrength, potOdds, toCall, drawPotential, equity, spr, phase } = factors;
+        const { pot, bigBlind, activePlayers } = gameState;
+        
+        // 计算精确权益（包含听牌）
+        const totalEquity = Math.min(1, equity + drawPotential * this.getDrawMultiplier(phase));
+        
+        // 计算隐含赔率（深筹码时更重要）
+        const impliedOdds = spr > 5 ? drawPotential * 0.3 : 0;
+        const adjustedEquity = Math.min(1, totalEquity + impliedOdds);
+        
+        // 精确EV计算
+        const callEV = this.calculatePreciseEV(adjustedEquity, pot, toCall);
+        const foldEV = 0; // 弃牌EV总是0
+        
+        console.log(`[🧠 数学家] 权益: ${(adjustedEquity * 100).toFixed(1)}%, Pot Odds: ${(potOdds * 100).toFixed(1)}%, EV: ${callEV.toFixed(2)}`);
+        
+        // 无需跟注的情况 - 考虑价值下注
+        if (toCall === 0) {
+            const betEV = this.calculateBetEV(adjustedEquity, pot, bigBlind, activePlayers);
+            
+            if (betEV > this.config.evThreshold && actions[ACTIONS.RAISE]) {
+                // 数学最优下注尺寸取决于权益
+                const optimalBetSize = this.calculateMathOptimalBet(adjustedEquity, pot, phase);
+                console.log(`[🧠 数学家] 下注EV为正 (${betEV.toFixed(2)}), 下注 ${optimalBetSize}`);
+                return { 
+                    action: ACTIONS.RAISE, 
+                    amount: Math.min(Math.max(optimalBetSize, actions[ACTIONS.RAISE].min), actions[ACTIONS.RAISE].max)
+                };
+            }
+            
+            console.log(`[🧠 数学家] 下注EV不足，过牌`);
+            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+        }
+        
+        // 需要跟注的情况 - 严格EV决策
+        if (callEV > this.config.evThreshold) {
+            // EV为正，考虑加注还是跟注
+            const raiseEV = this.calculateRaiseEV(adjustedEquity, pot, toCall, bigBlind);
+            
+            if (raiseEV > callEV && adjustedEquity > 0.55 && actions[ACTIONS.RAISE]) {
+                // 加注EV更高
+                const raiseSize = this.calculateMathOptimalRaise(adjustedEquity, pot, toCall);
+                console.log(`[🧠 数学家] 加注EV (${raiseEV.toFixed(2)}) > 跟注EV (${callEV.toFixed(2)}), 加注 ${raiseSize}`);
+                return { 
+                    action: ACTIONS.RAISE, 
+                    amount: Math.min(Math.max(raiseSize, actions[ACTIONS.RAISE].min), actions[ACTIONS.RAISE].max)
+                };
+            }
+            
+            console.log(`[🧠 数学家] 跟注EV为正 (${callEV.toFixed(2)}), 跟注`);
+            if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
+        }
+        
+        // EV为负
+        console.log(`[🧠 数学家] EV为负 (${callEV.toFixed(2)}), 弃牌`);
+        if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+        return { action: ACTIONS.FOLD };
+    }
+
+    /**
+     * 获取起手牌预估胜率
+     */
+    getPreflopEquity(preflopScore, activePlayers) {
+        // 基于起手牌评分估算对抗多个对手的胜率
+        // 起手牌评分20分对应约85%胜率(单挑)，随对手数增加递减
+        const baseEquity = 0.35 + (preflopScore / 20) * 0.5; // 35%-85%
+        
+        // 对手数量调整
+        const opponentAdjust = Math.pow(0.88, activePlayers - 1);
+        
+        return Math.min(0.95, baseEquity * opponentAdjust);
+    }
+
+    /**
+     * 计算精确EV
+     * EV = Equity × (Pot + Call) - (1 - Equity) × Call
+     * 简化为: EV = Equity × Pot + Equity × Call - Call + Equity × Call
+     * = Equity × Pot - Call × (1 - Equity)
+     */
+    calculatePreciseEV(equity, pot, toCall) {
+        if (toCall <= 0) return equity * pot;
+        return (equity * (pot + toCall)) - toCall;
+    }
+
+    /**
+     * 计算开池加注EV
+     */
+    calculateOpenRaiseEV(equity, pot, bigBlind, activePlayers) {
+        // 假设对手有约30%的概率跟注
+        const foldEquity = 0.6 - activePlayers * 0.05;
+        const raiseSize = bigBlind * 2.5;
+        
+        // EV = 弃牌概率 × 底池 + 跟注概率 × (胜率 × 新底池 - 加注额)
+        const callProb = 1 - foldEquity;
+        const newPot = pot + raiseSize * 2;
+        
+        return foldEquity * pot + callProb * (equity * newPot - raiseSize);
+    }
+
+    /**
+     * 计算下注EV
+     */
+    calculateBetEV(equity, pot, bigBlind, activePlayers) {
+        // 简化模型：假设对手有一定概率弃牌
+        const betSize = pot * 0.5; // 半池下注
+        const foldEquity = 0.4; // 假设对手40%弃牌率
+        
+        // EV = 弃牌概率 × 底池 + 跟注概率 × (胜率 × 新底池 - 下注额)
+        const callProb = 1 - foldEquity;
+        const newPot = pot + betSize * 2;
+        
+        return foldEquity * pot + callProb * (equity * newPot - betSize);
+    }
+
+    /**
+     * 计算加注EV
+     */
+    calculateRaiseEV(equity, pot, toCall, bigBlind) {
+        const raiseSize = toCall * 2.5;
+        const foldEquity = 0.35; // 假设对手35%弃牌率
+        
+        const callProb = 1 - foldEquity;
+        const newPot = pot + toCall + raiseSize * 2;
+        
+        return foldEquity * (pot + toCall) + callProb * (equity * newPot - raiseSize);
+    }
+
+    /**
+     * 计算数学最优下注大小
+     * 基于权益和底池大小
+     */
+    calculateMathOptimalBet(equity, pot, phase) {
+        // 权益越高，下注越大
+        // 河牌阶段通常下注更大
+        let betRatio;
+        
+        if (equity > 0.75) {
+            // 超强牌：大额价值下注
+            betRatio = 0.75 + Math.random() * 0.15;
+        } else if (equity > 0.55) {
+            // 强牌：中等价值下注
+            betRatio = 0.5 + Math.random() * 0.15;
+        } else if (equity > 0.35) {
+            // 中等牌：小额下注或过牌
+            betRatio = 0.33;
+        } else {
+            // 弱牌：诈唬或过牌
+            betRatio = Math.random() < 0.18 ? 0.6 : 0;
+        }
+        
+        if (phase === GAME_PHASES.RIVER) {
+            betRatio *= 1.2; // 河牌下注大一些
+        }
+        
+        return Math.floor(pot * betRatio);
+    }
+
+    /**
+     * 计算数学最优加注大小
+     */
+    calculateMathOptimalRaise(equity, pot, toCall) {
+        // 基于权益的最优加注
+        // 权益高时加注大，权益低时加注小
+        let raiseMultiplier;
+        
+        if (equity > 0.75) {
+            raiseMultiplier = 3.5; // 强牌大加注
+        } else if (equity > 0.55) {
+            raiseMultiplier = 2.5; // 中强牌标准加注
+        } else {
+            raiseMultiplier = 2; // 最小加注
+        }
+        
+        return Math.floor(toCall * raiseMultiplier + pot * 0.3);
+    }
+
+    /**
+     * 获取听牌乘数（不同阶段听牌价值不同）
+     */
+    getDrawMultiplier(phase) {
+        switch (phase) {
+            case GAME_PHASES.FLOP:
+                return 0.8; // 翻牌有两条街可以中
+            case GAME_PHASES.TURN:
+                return 0.45; // 转牌只有一条街
+            case GAME_PHASES.RIVER:
+                return 0; // 河牌没有听牌价值
+            default:
+                return 0;
+        }
     }
 }

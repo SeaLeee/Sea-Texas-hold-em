@@ -2076,3 +2076,466 @@ html, body {
         display: none;
     }
 }
+
+/* ===== 移动端全面适配 ===== */
+
+/* 超小屏幕 (手机竖屏) */
+@media (max-width: 480px) {
+    /* 根元素适配 */
+    html, body {
+        font-size: 14px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* 菜单页面优化 */
+    .menu-container {
+        padding: 20px 15px;
+        max-width: 100%;
+    }
+    
+    .game-logo h1 {
+        font-size: 1.8rem;
+        letter-spacing: 2px;
+    }
+    
+    .game-logo .subtitle {
+        font-size: 0.85rem;
+        letter-spacing: 4px;
+    }
+    
+    .menu-options {
+        margin: 25px 0;
+    }
+    
+    .option-group {
+        margin-bottom: 18px;
+    }
+    
+    .option-group label {
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+    
+    /* 选择按钮优化 - 更大的点击区域 */
+    .diff-btn, .count-btn, .chips-btn, .blinds-btn, .pers-btn {
+        padding: 14px 18px;
+        font-size: 0.9rem;
+        min-height: 48px; /* 最小触摸目标 */
+        flex: 1 1 auto;
+    }
+    
+    .difficulty-selector,
+    .player-count-selector,
+    .chips-selector,
+    .blinds-selector {
+        gap: 8px;
+    }
+    
+    .personality-selector {
+        gap: 6px;
+    }
+    
+    .pers-btn {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+        flex: 0 0 auto;
+    }
+    
+    .start-btn {
+        padding: 16px 30px;
+        font-size: 1.1rem;
+        min-height: 56px;
+    }
+    
+    /* 游戏桌面优化 */
+    .poker-table {
+        width: 98%;
+        height: auto;
+        min-height: 280px;
+        padding: 15px;
+    }
+    
+    /* 玩家位置优化 */
+    .player-seat {
+        transform: scale(0.85);
+    }
+    
+    .player-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    .player-info {
+        padding: 4px 8px;
+        min-width: 70px;
+    }
+    
+    .player-name {
+        font-size: 0.75rem;
+    }
+    
+    .player-chips {
+        font-size: 0.8rem;
+    }
+    
+    .player-bet {
+        font-size: 0.75rem;
+        padding: 3px 8px;
+    }
+    
+    /* 顶部栏优化 */
+    .top-bar {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    
+    .game-info {
+        font-size: 0.8rem;
+        gap: 8px;
+    }
+    
+    .pot-display {
+        padding: 6px 12px;
+    }
+    
+    .pot-amount {
+        font-size: 1.2rem;
+    }
+    
+    /* 操作按钮优化 - 更大的触摸目标 */
+    .action-panel {
+        padding: 12px 8px;
+        bottom: 0;
+    }
+    
+    .action-buttons {
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .action-btn {
+        padding: 14px 16px;
+        min-width: 70px;
+        min-height: 50px;
+        font-size: 0.9rem;
+        flex: 1 1 calc(50% - 6px);
+        max-width: calc(50% - 6px);
+    }
+    
+    .action-btn.fold-btn,
+    .action-btn.check-btn,
+    .action-btn.call-btn {
+        flex: 1 1 calc(33% - 6px);
+        max-width: calc(33% - 6px);
+    }
+    
+    .action-btn.raise-btn,
+    .action-btn.allin-btn {
+        flex: 1 1 calc(50% - 6px);
+    }
+    
+    /* 加注滑块优化 */
+    .raise-controls {
+        padding: 10px 12px;
+    }
+    
+    .raise-slider {
+        height: 8px;
+        margin: 10px 0;
+    }
+    
+    .raise-slider::-webkit-slider-thumb {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .raise-slider::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .raise-input {
+        width: 80px;
+        font-size: 1rem;
+        padding: 8px;
+    }
+    
+    .quick-raise-btns {
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .quick-raise-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        min-height: 40px;
+    }
+    
+    /* 日志面板优化 */
+    .game-log {
+        width: 200px;
+        max-height: 150px;
+        right: 5px;
+        bottom: 180px;
+        font-size: 0.75rem;
+    }
+    
+    .log-header {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+    
+    .log-content {
+        padding: 6px;
+    }
+    
+    .log-entry {
+        padding: 4px 6px;
+        font-size: 0.7rem;
+    }
+    
+    /* 概率/策略面板优化 */
+    .odds-panel, .strategy-panel, .stats-panel {
+        width: 260px;
+        max-height: 300px;
+        font-size: 0.85rem;
+    }
+    
+    .odds-panel {
+        top: 60px;
+        left: 10px;
+    }
+    
+    .strategy-panel {
+        top: 60px;
+        left: 10px;
+    }
+    
+    .stats-panel {
+        top: 60px;
+        right: 10px;
+    }
+    
+    .panel-header {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .panel-content {
+        padding: 10px;
+    }
+    
+    /* 公共牌区域优化 */
+    .community-cards {
+        gap: 4px;
+        padding: 8px;
+    }
+    
+    /* 结算弹窗优化 */
+    .result-modal-content {
+        width: 95%;
+        max-width: 320px;
+        padding: 20px 15px;
+    }
+    
+    .result-title {
+        font-size: 1.3rem;
+    }
+    
+    .result-details {
+        font-size: 0.9rem;
+    }
+    
+    .result-btn {
+        padding: 14px 30px;
+        font-size: 1rem;
+        min-height: 50px;
+    }
+    
+    /* "轮到你" 指示器优化 */
+    .your-turn-indicator {
+        bottom: 180px;
+        padding: 10px 25px;
+    }
+    
+    .your-turn-indicator span {
+        font-size: 1rem;
+    }
+    
+    /* 隐藏不必要的元素 */
+    .keyboard-hints {
+        display: none;
+    }
+}
+
+/* 小屏幕横屏 */
+@media (max-width: 812px) and (orientation: landscape) {
+    .poker-table {
+        height: 55vh;
+        min-height: 200px;
+    }
+    
+    .player-seat {
+        transform: scale(0.75);
+    }
+    
+    .action-panel {
+        padding: 8px;
+    }
+    
+    .action-btn {
+        padding: 10px 14px;
+        min-height: 42px;
+    }
+    
+    .top-bar {
+        padding: 6px 10px;
+    }
+    
+    .game-log {
+        max-height: 120px;
+        bottom: 140px;
+    }
+    
+    .your-turn-indicator {
+        bottom: 140px;
+    }
+}
+
+/* 中等屏幕 (平板竖屏) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .menu-container {
+        padding: 30px 20px;
+    }
+    
+    .game-logo h1 {
+        font-size: 2.2rem;
+    }
+    
+    .diff-btn, .count-btn, .chips-btn, .blinds-btn {
+        padding: 14px 22px;
+        min-height: 48px;
+    }
+    
+    .action-btn {
+        padding: 14px 22px;
+        min-height: 50px;
+        font-size: 1rem;
+    }
+    
+    .poker-table {
+        width: 96%;
+    }
+    
+    .player-seat {
+        transform: scale(0.9);
+    }
+    
+    /* 面板并排显示 */
+    .odds-panel {
+        top: 80px;
+        left: 15px;
+        width: 240px;
+    }
+    
+    .strategy-panel {
+        top: 80px;
+        left: 270px;
+        width: 240px;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    /* 增大所有可点击元素 */
+    .action-btn,
+    .diff-btn,
+    .count-btn,
+    .chips-btn,
+    .blinds-btn,
+    .pers-btn,
+    .start-btn,
+    .quick-raise-btn,
+    .result-btn,
+    .menu-btn,
+    .buddy-card {
+        min-height: 44px; /* iOS推荐最小触摸目标 */
+    }
+    
+    /* 移除悬停效果，改用活动状态 */
+    .action-btn:hover,
+    .diff-btn:hover,
+    .count-btn:hover {
+        transform: none;
+    }
+    
+    .action-btn:active,
+    .diff-btn:active,
+    .count-btn:active {
+        transform: scale(0.95);
+        opacity: 0.9;
+    }
+    
+    /* 滑块优化 */
+    .raise-slider {
+        height: 10px;
+    }
+    
+    .raise-slider::-webkit-slider-thumb {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* 安全区域适配 (iPhone X 及更新机型) */
+@supports (padding: max(0px)) {
+    .action-panel {
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    
+    .top-bar {
+        padding-top: max(8px, env(safe-area-inset-top));
+    }
+    
+    #menu-screen {
+        padding-top: max(20px, env(safe-area-inset-top));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}
+
+/* 深色模式优化 (如果系统使用深色模式) */
+@media (prefers-color-scheme: dark) {
+    .odds-panel, .strategy-panel, .stats-panel {
+        background: rgba(5, 5, 15, 0.98);
+    }
+}
+
+/* 防止文字选择和长按菜单 */
+.action-btn,
+.diff-btn,
+.count-btn,
+.chips-btn,
+.blinds-btn,
+.pers-btn,
+.start-btn,
+.quick-raise-btn,
+.result-btn,
+.buddy-card {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* 滚动优化 */
+.screen {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* 防止双击缩放 */
+.game-screen {
+    touch-action: manipulation;
+}
