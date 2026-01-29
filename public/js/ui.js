@@ -341,33 +341,64 @@ class UI {
             });
         });
         
+        // 处理卡片点击/触摸的通用函数
+        const handleCardSelect = (card, e) => {
+            // 阻止默认行为和冒泡
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            const buddyId = card.dataset.buddy;
+            const index = this.selectedBuddies.indexOf(buddyId);
+            const maxBuddies = getMaxBuddies();
+            
+            if (index > -1) {
+                // 已选择，取消选择
+                this.selectedBuddies.splice(index, 1);
+                card.classList.remove('selected');
+            } else {
+                // 检查是否超过最大数量
+                if (this.selectedBuddies.length >= maxBuddies) {
+                    return; // 已达最大数量，不再添加
+                }
+                // 未选择，添加选择
+                this.selectedBuddies.push(buddyId);
+                card.classList.add('selected');
+            }
+            
+            // 更新计数显示
+            if (selectedCountEl) {
+                selectedCountEl.textContent = this.selectedBuddies.length;
+            }
+            
+            // 更新卡片状态
+            this.updateBuddyCardStates(maxBuddies);
+        };
+        
         buddyCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const buddyId = card.dataset.buddy;
-                const index = this.selectedBuddies.indexOf(buddyId);
-                const maxBuddies = getMaxBuddies();
-                
-                if (index > -1) {
-                    // 已选择，取消选择
-                    this.selectedBuddies.splice(index, 1);
-                    card.classList.remove('selected');
-                } else {
-                    // 检查是否超过最大数量
-                    if (this.selectedBuddies.length >= maxBuddies) {
-                        return; // 已达最大数量，不再添加
-                    }
-                    // 未选择，添加选择
-                    this.selectedBuddies.push(buddyId);
-                    card.classList.add('selected');
+            // 标记是否正在处理触摸，防止触摸后又触发click
+            let touchHandled = false;
+            
+            // 触摸事件 - 移动端优先
+            card.addEventListener('touchstart', (e) => {
+                touchHandled = false;
+            }, { passive: true });
+            
+            card.addEventListener('touchend', (e) => {
+                // 检查是否是简单的点击（没有滑动）
+                touchHandled = true;
+                handleCardSelect(card, e);
+            }, { passive: false });
+            
+            // 点击事件 - 桌面端和作为移动端后备
+            card.addEventListener('click', (e) => {
+                // 如果触摸事件已处理，跳过click
+                if (touchHandled) {
+                    touchHandled = false;
+                    return;
                 }
-                
-                // 更新计数显示
-                if (selectedCountEl) {
-                    selectedCountEl.textContent = this.selectedBuddies.length;
-                }
-                
-                // 更新卡片状态
-                this.updateBuddyCardStates(maxBuddies);
+                handleCardSelect(card, e);
             });
         });
     }
