@@ -45,6 +45,9 @@ class GameManager {
     initialize(settings = {}) {
         this.settings = { ...DEFAULT_SETTINGS, ...settings };
         
+        // 获取选择的小伙伴
+        this.selectedBuddies = settings.selectedBuddies || [];
+        
         // 初始化AI系统（支持难度和性格）
         const personality = this.settings.aiPersonality || AI_PERSONALITY.BALANCED;
         this.ai = new AI(this.settings.difficulty, personality);
@@ -64,16 +67,37 @@ class GameManager {
             0
         ));
 
-        // AI玩家
+        // 添加选择的小伙伴
+        let position = 1;
+        for (const buddyId of this.selectedBuddies) {
+            if (position >= this.settings.playerCount) break;
+            
+            const buddyConfig = PRESET_BUDDIES[buddyId];
+            if (buddyConfig) {
+                this.players.push(new Player(
+                    position,
+                    buddyConfig.name,
+                    this.settings.startingChips,
+                    false,
+                    position,
+                    buddyConfig
+                ));
+                position++;
+            }
+        }
+
+        // 如果小伙伴不够，用随机AI填充
         const shuffledNames = [...AI_NAMES].sort(() => Math.random() - 0.5);
-        for (let i = 1; i < this.settings.playerCount; i++) {
+        let nameIndex = 0;
+        while (position < this.settings.playerCount) {
             this.players.push(new Player(
-                i,
-                shuffledNames[i - 1],
+                position,
+                shuffledNames[nameIndex++],
                 this.settings.startingChips,
                 false,
-                i
+                position
             ));
+            position++;
         }
 
         this.dealerPosition = Math.floor(Math.random() * this.players.length);
@@ -415,30 +439,36 @@ class GameManager {
      * @returns {boolean}
      */
     isBettingRoundComplete() {
+        const playersInHand = this.getPlayersInHand();
         const activePlayers = this.getActivePlayers();
         
         // 只剩一个玩家
-        if (this.getPlayersInHand().length <= 1) {
+        if (playersInHand.length <= 1) {
+            return true;
+        }
+        
+        // 所有人都 ALL IN 了
+        if (activePlayers.length === 0) {
             return true;
         }
 
         // 检查所有活跃玩家是否都已行动且下注相等
         for (const player of activePlayers) {
-            // 如果玩家还没有行动（除了盲注）
-            if (player.lastAction === null && !player.isBigBlind) {
+            // 如果有人加注后，其他玩家还没跟上
+            if (player.currentBet < this.currentBet) {
                 return false;
             }
             
-            // 大盲位在翻牌前有option
-            if (this.phase === GAME_PHASES.PREFLOP && 
-                player.isBigBlind && 
-                player.lastAction === null &&
-                this.currentBet === this.settings.bigBlind) {
-                return false;
-            }
-
-            // 如果有人加注后，其他玩家还没跟上
-            if (player.currentBet < this.currentBet && player.canAct()) {
+            // 如果玩家还没有行动
+            if (player.lastAction === null) {
+                // 大盲位在翻牌前：如果没人加注，大盲有option
+                if (this.phase === GAME_PHASES.PREFLOP && player.isBigBlind) {
+                    // 大盲位还未行动，且当前下注等于大盲注
+                    if (this.currentBet === this.settings.bigBlind) {
+                        return false; // 大盲有option
+                    }
+                }
+                // 其他情况下，玩家必须行动
                 return false;
             }
         }

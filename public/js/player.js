@@ -9,13 +9,21 @@ class Player {
      * @param {number} chips - 初始筹码
      * @param {boolean} isHuman - 是否为人类玩家
      * @param {number} position - 座位位置
+     * @param {Object} buddyConfig - 预设小伙伴配置（可选）
      */
-    constructor(id, name, chips, isHuman = false, position = 0) {
+    constructor(id, name, chips, isHuman = false, position = 0, buddyConfig = null) {
         this.id = id;
         this.name = name;
         this.chips = chips;
         this.isHuman = isHuman;
         this.position = position;
+        
+        // 预设小伙伴配置
+        this.buddyConfig = buddyConfig;
+        this.personality = buddyConfig ? buddyConfig.personality : null;
+        this.difficulty = buddyConfig ? buddyConfig.difficulty : null;
+        this.dialogues = buddyConfig ? buddyConfig.dialogues : null;
+        this.style = buddyConfig ? buddyConfig.style : null;
         
         // 游戏状态
         this.holeCards = [];           // 底牌
@@ -29,8 +37,61 @@ class Player {
         this.isSmallBlind = false;
         this.isBigBlind = false;
         
-        // 头像
-        this.avatar = PLAYER_AVATARS[position % PLAYER_AVATARS.length];
+        // 头像 - 优先使用小伙伴头像
+        this.avatar = buddyConfig ? buddyConfig.avatar : PLAYER_AVATARS[position % PLAYER_AVATARS.length];
+        
+        // 当前对话
+        this.currentDialogue = null;
+        this.dialogueTimeout = null;
+    }
+
+    /**
+     * 获取随机对话
+     * @param {string} type - 对话类型 (win/lose/bluff/allIn/taunt)
+     * @returns {string|null}
+     */
+    getDialogue(type) {
+        if (!this.dialogues || !this.dialogues[type]) {
+            return null;
+        }
+        
+        const dialogueList = this.dialogues[type];
+        if (Array.isArray(dialogueList)) {
+            return dialogueList[Math.floor(Math.random() * dialogueList.length)];
+        }
+        return dialogueList;
+    }
+
+    /**
+     * 说话
+     * @param {string} type - 对话类型
+     * @param {number} duration - 显示时长（毫秒）
+     * @returns {string|null}
+     */
+    speak(type, duration = 3000) {
+        const dialogue = this.getDialogue(type);
+        if (dialogue) {
+            this.currentDialogue = dialogue;
+            
+            // 清除之前的超时
+            if (this.dialogueTimeout) {
+                clearTimeout(this.dialogueTimeout);
+            }
+            
+            // 设置自动清除
+            this.dialogueTimeout = setTimeout(() => {
+                this.currentDialogue = null;
+            }, duration);
+        }
+        return dialogue;
+    }
+
+    /**
+     * 检查是否为预设小伙伴
+     * @returns {boolean}
+     */
+    isBuddy() {
+        return this.buddyConfig !== null;
     }
 
     /**

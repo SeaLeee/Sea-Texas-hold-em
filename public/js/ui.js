@@ -92,19 +92,18 @@ class UI {
             
             // 概率计算器面板
             oddsPanel: document.getElementById('odds-panel'),
-            oddsToggleBtn: document.getElementById('toggle-odds-panel'),
-            winProbValue: document.getElementById('win-prob-value'),
+            oddsToggleBtn: document.getElementById('show-odds-btn'),
+            winProbValue: document.getElementById('win-prob'),
             handCategory: document.getElementById('hand-category'),
             strengthFill: document.getElementById('strength-fill'),
             handKey: document.getElementById('hand-key'),
             drawsList: document.getElementById('draws-list'),
-            probsList: document.getElementById('probs-list'),
+            probsList: document.getElementById('probabilities-list'),
             
             // 攻略建议面板
             strategyPanel: document.getElementById('strategy-panel'),
-            strategyToggleBtn: document.getElementById('toggle-strategy-panel'),
-            adviceIcon: document.getElementById('advice-icon'),
-            adviceText: document.getElementById('advice-text'),
+            strategyToggleBtn: document.getElementById('show-strategy-btn'),
+            adviceAction: document.getElementById('advice-action'),
             confidenceFill: document.getElementById('confidence-fill'),
             confidenceText: document.getElementById('confidence-text'),
             adviceReason: document.getElementById('advice-reason'),
@@ -112,7 +111,7 @@ class UI {
             
             // 数据统计面板
             statsPanel: document.getElementById('stats-panel'),
-            statsToggleBtn: document.getElementById('toggle-stats-panel'),
+            statsToggleBtn: document.getElementById('show-stats-btn'),
             statPot: document.getElementById('stat-pot'),
             statCall: document.getElementById('stat-call'),
             statMyChips: document.getElementById('stat-my-chips'),
@@ -162,6 +161,10 @@ class UI {
         this.setupButtonGroup('.chips-btn', 'data-chips');
         this.setupButtonGroup('.blinds-btn', 'data-blinds');
         this.setupButtonGroup('.pers-btn', 'data-personality');
+        
+        // 小伙伴选择
+        this.selectedBuddies = [];
+        this.setupBuddySelector();
 
         // 游戏操作按钮
         this.elements.foldBtn.addEventListener('click', () => {
@@ -300,8 +303,39 @@ class UI {
             startingChips,
             smallBlind,
             bigBlind,
-            aiPersonality
+            aiPersonality,
+            selectedBuddies: this.selectedBuddies || []
         };
+    }
+
+    /**
+     * 设置小伙伴选择器
+     */
+    setupBuddySelector() {
+        const buddyCards = document.querySelectorAll('.buddy-card');
+        const selectedCountEl = document.getElementById('selected-count');
+        
+        buddyCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const buddyId = card.dataset.buddy;
+                const index = this.selectedBuddies.indexOf(buddyId);
+                
+                if (index > -1) {
+                    // 已选择，取消选择
+                    this.selectedBuddies.splice(index, 1);
+                    card.classList.remove('selected');
+                } else {
+                    // 未选择，添加选择
+                    this.selectedBuddies.push(buddyId);
+                    card.classList.add('selected');
+                }
+                
+                // 更新计数显示
+                if (selectedCountEl) {
+                    selectedCountEl.textContent = this.selectedBuddies.length;
+                }
+            });
+        });
     }
 
     /**
@@ -330,6 +364,9 @@ class UI {
      * @param {Object} state - 游戏状态
      */
     updateGameUI(state) {
+        const previousPhase = this.gameState?.phase;
+        const previousPlayerIndex = this.gameState?.currentPlayerIndex;
+        
         this.gameState = state;
 
         // 更新顶部信息
@@ -348,6 +385,99 @@ class UI {
         
         // 更新数据面板
         this.updatePanelsData();
+        
+        // 阶段变化时显示公告
+        if (previousPhase !== state.phase && state.phase !== GAME_PHASES.WAITING) {
+            this.showPhaseAnnouncement(state.phaseName);
+        }
+        
+        // 轮到玩家行动时显示提示
+        const humanPlayer = state.players.find(p => p.isHuman);
+        const isMyTurn = humanPlayer && 
+                         state.players[state.currentPlayerIndex]?.id === humanPlayer.id && 
+                         state.phase !== GAME_PHASES.WAITING &&
+                         state.phase !== GAME_PHASES.SHOWDOWN;
+        
+        if (isMyTurn && previousPlayerIndex !== state.currentPlayerIndex) {
+            this.showYourTurnIndicator();
+        }
+    }
+
+    /**
+     * 显示阶段公告
+     * @param {string} phaseName - 阶段名称
+     */
+    showPhaseAnnouncement(phaseName) {
+        // 移除已存在的公告
+        const existingAnnouncement = document.querySelector('.phase-announcement');
+        if (existingAnnouncement) {
+            existingAnnouncement.remove();
+        }
+        
+        const announcement = document.createElement('div');
+        announcement.className = 'phase-announcement';
+        
+        // 根据阶段设置不同图标
+        let icon = '🎴';
+        switch (phaseName) {
+            case 'Preflop':
+                icon = '🃏';
+                break;
+            case 'Flop':
+                icon = '🎯';
+                break;
+            case 'Turn':
+                icon = '🔄';
+                break;
+            case 'River':
+                icon = '🌊';
+                break;
+            case 'Showdown':
+                icon = '🏆';
+                break;
+        }
+        
+        announcement.innerHTML = `
+            <span class="phase-icon">${icon}</span>
+            <span class="phase-name">${phaseName}</span>
+        `;
+        
+        document.body.appendChild(announcement);
+        
+        // 自动移除
+        setTimeout(() => {
+            announcement.classList.add('fade-out');
+            setTimeout(() => announcement.remove(), 500);
+        }, 1500);
+    }
+
+    /**
+     * 显示轮到你行动的提示
+     */
+    showYourTurnIndicator() {
+        // 移除已存在的提示
+        const existingIndicator = document.querySelector('.your-turn-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        const indicator = document.createElement('div');
+        indicator.className = 'your-turn-indicator';
+        indicator.innerHTML = `
+            <span class="turn-icon">👆</span>
+            <span class="turn-text">轮到你行动！</span>
+        `;
+        
+        document.body.appendChild(indicator);
+        
+        // 播放提示音效（如果有）
+        // this.playSound('your-turn');
+        
+        // 自动移除
+        setTimeout(() => {
+            indicator.classList.add('fade-out');
+            setTimeout(() => indicator.remove(), 500);
+        }, 2000);
     }
 
     /**
@@ -556,7 +686,54 @@ class UI {
         seat.appendChild(avatar);
         seat.appendChild(info);
 
+        // 添加对话气泡（如果玩家有对话）
+        if (player.currentDialogue) {
+            const dialogueEl = this.createDialogueBubble(player.currentDialogue);
+            seat.appendChild(dialogueEl);
+        }
+
         return seat;
+    }
+
+    /**
+     * 创建对话气泡
+     * @param {string} text - 对话内容
+     * @param {string} type - 对话类型
+     * @returns {HTMLElement}
+     */
+    createDialogueBubble(text, type = '') {
+        const bubble = document.createElement('div');
+        bubble.className = `player-dialogue ${type}`;
+        bubble.textContent = text;
+        return bubble;
+    }
+
+    /**
+     * 显示玩家对话
+     * @param {Player} player - 玩家
+     * @param {string} type - 对话类型
+     */
+    showPlayerDialogue(player, type) {
+        const dialogue = player.speak(type);
+        if (dialogue) {
+            const seat = document.getElementById(`player-seat-${player.id}`);
+            if (seat) {
+                // 移除旧的对话气泡
+                const oldBubble = seat.querySelector('.player-dialogue');
+                if (oldBubble) {
+                    oldBubble.remove();
+                }
+                
+                // 添加新的对话气泡
+                const bubble = this.createDialogueBubble(dialogue, type);
+                seat.appendChild(bubble);
+                
+                // 自动移除对话气泡
+                setTimeout(() => {
+                    bubble.remove();
+                }, 3000);
+            }
+        }
     }
 
     /**
@@ -1055,7 +1232,7 @@ class UI {
      * @param {Object} advice - 建议信息
      */
     updateStrategyPanel(advice) {
-        // 建议图标
+        // 建议图标和动作
         const iconMap = {
             'FOLD': '🚫',
             'CHECK': '✋',
@@ -1064,11 +1241,6 @@ class UI {
             'ALLIN': '🔥'
         };
         
-        if (this.elements.adviceIcon) {
-            this.elements.adviceIcon.textContent = iconMap[advice.action] || '🤔';
-        }
-        
-        // 建议动作文本
         const actionTextMap = {
             'FOLD': '弃牌',
             'CHECK': '过牌',
@@ -1077,8 +1249,14 @@ class UI {
             'ALLIN': 'ALL IN'
         };
         
-        if (this.elements.adviceText) {
-            this.elements.adviceText.textContent = actionTextMap[advice.action] || advice.action;
+        // 更新建议动作区域
+        if (this.elements.adviceAction) {
+            const icon = iconMap[advice.action] || '🤔';
+            const text = actionTextMap[advice.action] || advice.action;
+            this.elements.adviceAction.innerHTML = `
+                <span class="advice-icon">${icon}</span>
+                <span class="advice-text">${text}</span>
+            `;
         }
         
         // 置信度

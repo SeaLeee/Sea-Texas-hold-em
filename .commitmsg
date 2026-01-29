@@ -1,0 +1,8 @@
+feat: Add intelligent AI system and particle effects  
+  
+- Added AI difficulty levels (Easy/Medium/Hard)  
+- Added AI personality types (Conservative/Balanced/Aggressive/Maniac)  
+- Implemented Chen Formula for hand strength calculation  
+- Added Canvas-based particle system for visual effects  
+- Added win celebration and ALL IN explosion effects  
+- Updated menu UI with personality selector  

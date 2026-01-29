@@ -58,6 +58,8 @@ class TexasHoldemApp {
      */
     logPlayerAction(player, action, amount) {
         let message = `<strong>${player.name}</strong> `;
+        let dialogueType = null;
+        
         switch (action) {
             case ACTIONS.FOLD:
                 message += '弃牌';
@@ -70,14 +72,28 @@ class TexasHoldemApp {
                 break;
             case ACTIONS.RAISE:
                 message += `加注到 ${player.currentBet}`;
+                // AI加注时可能会嘲讽
+                if (!player.isHuman && Math.random() < 0.4) {
+                    dialogueType = 'taunt';
+                }
                 break;
             case ACTIONS.ALLIN:
                 message += `全押 ${amount}`;
                 // 触发ALL IN粒子效果
                 this.triggerAllInParticles(player);
+                // AI全押时大概率会说话
+                if (!player.isHuman && Math.random() < 0.7) {
+                    dialogueType = 'bluff';
+                }
                 break;
         }
+        
         this.ui.addLog(message);
+        
+        // 触发NPC对话
+        if (dialogueType && player.isBuddy && player.isBuddy()) {
+            this.ui.showPlayerDialogue(player, dialogueType);
+        }
     }
 
     /**
@@ -118,6 +134,26 @@ class TexasHoldemApp {
 
         // 触发赢家粒子效果
         this.triggerWinnerParticles(result);
+        
+        // 触发赢家对话
+        result.winners.forEach(winner => {
+            if (winner.player.isBuddy && winner.player.isBuddy()) {
+                this.ui.showPlayerDialogue(winner.player, 'win');
+            }
+        });
+        
+        // 如果玩家输了，NPC可能会嘲讽
+        const humanPlayer = this.game.getHumanPlayer();
+        const humanLost = humanPlayer && !result.winners.some(w => w.player.id === humanPlayer.id);
+        if (humanLost && Math.random() < 0.5) {
+            // 找一个赢家NPC来嘲讽
+            const npcWinner = result.winners.find(w => w.player.isBuddy && w.player.isBuddy());
+            if (npcWinner) {
+                setTimeout(() => {
+                    this.ui.showPlayerDialogue(npcWinner.player, 'taunt');
+                }, 1000);
+            }
+        }
 
         // 显示结果弹窗
         setTimeout(() => {

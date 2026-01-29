@@ -177,6 +177,81 @@ const AI_NAMES = [
     'Jack', 'Mike', 'Tom', 'Alex'
 ];
 
+// 预设小伙伴角色
+const PRESET_BUDDIES = {
+    hailin: {
+        id: 'hailin',
+        name: '海林',
+        avatar: '🦈',
+        personality: AI_PERSONALITY.MANIAC,
+        difficulty: AI_DIFFICULTY.MEDIUM,
+        description: '喜欢诈唬直接干的选手',
+        style: '激进诈唬型',
+        dialogues: {
+            join: '来吧，让我看看你有多菜！',
+            win: ['太简单了！', '这就是实力！', '哈哈，你输定了！'],
+            lose: ['运气而已...', '下次让你好看！', '等着瞧！'],
+            bluff: ['你敢跟吗？', '我手里是皇家同花顺！', '全押！有种就跟！'],
+            allIn: ['直接干！', '全压！不服来战！', '梭哈！'],
+            taunt: ['就这？', '太弱了！', '连我都打不过？', '菜鸡！']
+        }
+    },
+    dada: {
+        id: 'dada',
+        name: '达达',
+        avatar: '🐂',
+        personality: AI_PERSONALITY.AGGRESSIVE,
+        difficulty: AI_DIFFICULTY.MEDIUM,
+        description: '喜欢装逼直接干的选手',
+        style: '装逼激进型',
+        dialogues: {
+            join: '今天我要让你们见识什么叫牌技！',
+            win: ['学着点！', '这波操作看懂了吗？', '太秀了，自己都怕！'],
+            lose: ['故意让你的！', '这牌谁打得赢...', '下次看我表演！'],
+            bluff: ['我已经看穿你了！', '这牌稳赢！', '你的牌我都知道！'],
+            allIn: ['装什么装，直接上！', '秀起来！', '让你见识一下！'],
+            taunt: ['这么菜的吗？', '我闭着眼都能赢你！', '有点水平好不好！']
+        }
+    },
+    yihua: {
+        id: 'yihua',
+        name: '一花',
+        avatar: '🌸',
+        personality: AI_PERSONALITY.BALANCED,
+        difficulty: AI_DIFFICULTY.HARD,
+        description: '高手，打法均衡有章法',
+        style: '均衡高手型',
+        dialogues: {
+            join: '认真打，不留情面。',
+            win: ['意料之中。', '基本操作。', '继续努力吧。'],
+            lose: ['有点东西。', '不错，但还不够。', '值得尊敬的对手。'],
+            bluff: ['你确定要跟吗？', '概率不在你那边。', '三思而后行。'],
+            allIn: ['时机到了。', '这是正确的决定。', '计算完毕，全押。'],
+            taunt: ['需要我教你吗？', '基础不够扎实。', '还需要多练习。']
+        }
+    },
+    dahai: {
+        id: 'dahai',
+        name: '大海',
+        avatar: '🌊',
+        personality: AI_PERSONALITY.CONSERVATIVE,
+        difficulty: AI_DIFFICULTY.HARD,
+        description: '稳重型选手，很少冒险',
+        style: '稳健保守型',
+        dialogues: {
+            join: '慢慢来，不着急。',
+            win: ['稳扎稳打。', '耐心是美德。', '急什么呢？'],
+            lose: ['无妨，来日方长。', '这手牌没办法。', '运气成分太大。'],
+            bluff: ['我手里的牌...', '你猜猜看。', '嗯...让我想想。'],
+            allIn: ['是时候了。', '这手牌值得。', '稳中求胜。'],
+            taunt: ['别急，慢慢打。', '冲动是魔鬼。', '淡定一点。']
+        }
+    }
+};
+
+// 获取预设角色列表
+const BUDDY_LIST = Object.values(PRESET_BUDDIES);
+
 // 键盘快捷键
 const KEYBOARD_SHORTCUTS = {
     FOLD: 'f',
