@@ -36,6 +36,9 @@ class GameManager {
         
         // 游戏统计
         this.roundNumber = 0;
+        
+        // 本手牌行动历史（用于GTO分析）
+        this.currentHandHistory = [];
     }
 
     /**
@@ -44,6 +47,10 @@ class GameManager {
      */
     initialize(settings = {}) {
         this.settings = { ...DEFAULT_SETTINGS, ...settings };
+        
+        // 游戏模式设置
+        this.gameMode = settings.gameMode || GAME_MODE.FLOW;
+        this.maxRounds = settings.maxRounds || 0; // 0表示无限
         
         // 获取选择的小伙伴
         this.selectedBuddies = settings.selectedBuddies || [];
@@ -159,6 +166,9 @@ class GameManager {
         // 重置公共牌和底池
         this.communityCards = [];
         this.pot = 0;
+        
+        // 重置本手牌行动历史（用于GTO分析）
+        this.currentHandHistory = [];
         this.sidePots = [];
         this.currentBet = 0;
         this.lastRaiser = null;
@@ -400,6 +410,19 @@ class GameManager {
                 return false;
         }
 
+        // 记录行动历史（用于GTO分析）
+        this.currentHandHistory.push({
+            playerId: player.id,
+            playerName: player.name,
+            isHuman: player.isHuman,
+            action: action,
+            amount: betAmount || amount,
+            phase: PHASE_NAMES[this.phase] || this.phase,
+            pot: this.pot,
+            currentBet: this.currentBet,
+            timestamp: Date.now()
+        });
+
         // 通知操作
         if (this.onPlayerAction) {
             this.onPlayerAction(player, action, betAmount);
@@ -601,6 +624,12 @@ class GameManager {
 
         // 添加所有玩家信息（用于结果展示所有人底牌）
         result.allPlayers = this.players;
+        
+        // 添加行动历史和人类玩家底牌（用于GTO分析）
+        result.actionHistory = [...this.currentHandHistory];
+        const humanPlayer = this.getHumanPlayer();
+        result.humanHoleCards = humanPlayer ? [...humanPlayer.holeCards] : [];
+        result.communityCards = [...this.communityCards];
 
         // 分配奖池
         this.distributePot(result);
@@ -628,6 +657,9 @@ class GameManager {
                 player.holeCards.forEach(card => card.reveal());
             }
             
+            // 获取人类玩家底牌（用于GTO分析）
+            const humanPlayer = this.getHumanPlayer();
+            
             const result = {
                 winners: [{
                     player: winner,
@@ -636,7 +668,10 @@ class GameManager {
                 isTie: false,
                 winAmount: this.pot,
                 reason: 'fold',
-                allPlayers: this.players  // 添加所有玩家信息
+                allPlayers: this.players,  // 添加所有玩家信息
+                actionHistory: [...this.currentHandHistory],  // 添加行动历史
+                humanHoleCards: humanPlayer ? [...humanPlayer.holeCards] : [],
+                communityCards: [...this.communityCards]
             };
 
             this.phase = GAME_PHASES.SHOWDOWN;

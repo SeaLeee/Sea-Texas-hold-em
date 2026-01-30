@@ -129,15 +129,21 @@
     font-size: 12px;
     color: rgba(255, 255, 255, 0.4);
     letter-spacing: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 90%;
+    text-overflow: clip;
 }
 
 .poker-card.small.back::after {
     font-size: 8px;
+    letter-spacing: 1px;
 }
 
 .poker-card.mini.back::after {
     font-size: 6px;
-    letter-spacing: 1px;
+    letter-spacing: 0px;
+    content: '♠♥';  /* mini尺寸只显示两个花色避免溢出 */
 }
 
 /* 翻牌动画 */

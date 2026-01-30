@@ -109,6 +109,18 @@ const DIFFICULTY_NAMES = {
     [AI_DIFFICULTY.HARD]: '困难'
 };
 
+// 游戏模式
+const GAME_MODE = {
+    FLOW: 'flow',      // 血流模式 - 无限局数，随时结算
+    ROUNDS: 'rounds'   // 计局模式 - 固定局数后结算
+};
+
+// 模式显示名称
+const MODE_NAMES = {
+    [GAME_MODE.FLOW]: '血流模式',
+    [GAME_MODE.ROUNDS]: '计局模式'
+};
+
 // AI性格类型
 const AI_PERSONALITY = {
     CONSERVATIVE: 'conservative',  // 保守型 - 紧凶

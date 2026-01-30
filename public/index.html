@@ -2,7 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="format-detection" content="telephone=no">
     <title>德州扑克 - Texas Hold'em</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/cards.css">
@@ -16,6 +21,16 @@
             <div class="game-logo">
                 <h1>♠ 德州扑克 ♥</h1>
                 <p class="subtitle">Texas Hold'em Poker</p>
+            </div>
+            
+            <!-- 资金池显示 -->
+            <div class="bankroll-display" id="bankroll-display">
+                <div class="bankroll-icon">💎</div>
+                <div class="bankroll-info">
+                    <span class="bankroll-label">我的资金</span>
+                    <span class="bankroll-amount" id="bankroll-amount">50,000</span>
+                </div>
+                <button class="bankroll-btn" id="bankroll-detail-btn" title="查看详情">📊</button>
             </div>
             
             <div class="menu-options">
@@ -63,6 +78,31 @@
                         <button class="blinds-btn active" data-blinds="10/20">10/20</button>
                         <button class="blinds-btn" data-blinds="25/50">25/50</button>
                         <button class="blinds-btn" data-blinds="50/100">50/100</button>
+                    </div>
+                </div>
+                
+                <div class="option-group">
+                    <label>游戏模式 <span class="mode-hint">(选择结算方式)</span></label>
+                    <div class="mode-selector">
+                        <button class="mode-btn active" data-mode="flow" title="无限局数，随时可点击结算">
+                            <span class="mode-icon">🔥</span>
+                            <span class="mode-name">血流模式</span>
+                            <span class="mode-desc">无限继续，随时结算</span>
+                        </button>
+                        <button class="mode-btn" data-mode="rounds" title="指定局数后自动结算">
+                            <span class="mode-icon">🎯</span>
+                            <span class="mode-name">计局模式</span>
+                            <span class="mode-desc">固定局数，自动结算</span>
+                        </button>
+                    </div>
+                    <div class="rounds-setting" id="rounds-setting" style="display: none;">
+                        <label>游戏局数</label>
+                        <div class="rounds-selector">
+                            <button class="rounds-btn" data-rounds="5">5局</button>
+                            <button class="rounds-btn active" data-rounds="10">10局</button>
+                            <button class="rounds-btn" data-rounds="20">20局</button>
+                            <button class="rounds-btn" data-rounds="50">50局</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -273,6 +313,7 @@
                     <span class="pot-amount" id="pot-amount">0</span>
                 </div>
                 <div class="top-actions">
+                    <button id="settle-btn" class="settle-btn" title="结算" style="display: none;">💰 结算</button>
                     <button id="menu-btn" class="icon-btn" title="菜单">☰</button>
                 </div>
             </div>
@@ -355,7 +396,57 @@
             <div id="result-details" class="result-details">
                 <!-- 结果详情将由JS动态生成 -->
             </div>
-            <button id="next-round-btn" class="start-btn">下一轮</button>
+            
+            <!-- GTO策略分析区域 -->
+            <div id="gto-analysis-section" class="gto-analysis-section" style="display: none;">
+                <div class="gto-header">
+                    <span class="gto-icon">📊</span>
+                    <span class="gto-title">策略分析</span>
+                    <button id="gto-toggle-btn" class="gto-toggle-btn">展开</button>
+                </div>
+                <div id="gto-content" class="gto-content" style="display: none;">
+                    <!-- 分析摘要 -->
+                    <div class="gto-summary" id="gto-summary">
+                        <div class="gto-rating">
+                            <span class="rating-label">本轮表现</span>
+                            <div class="rating-bar">
+                                <div class="rating-fill" id="gto-rating-fill"></div>
+                            </div>
+                            <span class="rating-score" id="gto-rating-score">--</span>
+                        </div>
+                        <p class="gto-summary-text" id="gto-summary-text"></p>
+                    </div>
+                    
+                    <!-- 关键时刻分析 -->
+                    <div class="gto-moments" id="gto-moments">
+                        <h4>🔍 关键决策点</h4>
+                        <div class="gto-moments-list" id="gto-moments-list">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 策略建议 -->
+                    <div class="gto-suggestions" id="gto-suggestions">
+                        <h4>💡 改进建议</h4>
+                        <div class="gto-suggestions-list" id="gto-suggestions-list">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <!-- GTO概念学习 -->
+                    <div class="gto-concepts" id="gto-concepts">
+                        <h4>📚 相关概念</h4>
+                        <div class="gto-concepts-list" id="gto-concepts-list">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="result-actions">
+                <button id="show-gto-btn" class="gto-btn" title="查看策略分析">📊 策略复盘</button>
+                <button id="next-round-btn" class="start-btn">下一轮</button>
+            </div>
         </div>
     </div>
     
@@ -662,6 +753,9 @@
     <script src="js/oddsCalculator.js"></script>
     <script src="js/particleSystem.js"></script>
     <script src="js/soundManager.js"></script>
+    <script src="js/vipManager.js"></script>
+    <script src="js/bankrollManager.js"></script>
+    <script src="js/gtoAnalyzer.js"></script>
     <script src="js/gameManager.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/lobbyManager.js"></script>

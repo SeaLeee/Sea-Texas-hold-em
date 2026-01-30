@@ -90,6 +90,9 @@ class UI {
             // 菜单按钮
             menuBtn: document.getElementById('menu-btn'),
             
+            // 结算按钮（血流模式）
+            settleBtn: document.getElementById('settle-btn'),
+            
             // 概率计算器面板
             oddsPanel: document.getElementById('odds-panel'),
             oddsToggleBtn: document.getElementById('show-odds-btn'),
@@ -119,8 +122,23 @@ class UI {
             playersChipsList: document.getElementById('players-chips-list'),
             
             // 工具栏按钮容器
-            toolbarButtons: document.querySelector('.toolbar-buttons')
+            toolbarButtons: document.querySelector('.toolbar-buttons'),
+            
+            // GTO策略分析相关元素
+            gtoSection: document.getElementById('gto-analysis-section'),
+            gtoToggleBtn: document.getElementById('gto-toggle-btn'),
+            gtoContent: document.getElementById('gto-content'),
+            gtoRatingFill: document.getElementById('gto-rating-fill'),
+            gtoRatingScore: document.getElementById('gto-rating-score'),
+            gtoSummaryText: document.getElementById('gto-summary-text'),
+            gtoMomentsList: document.getElementById('gto-moments-list'),
+            gtoSuggestionsList: document.getElementById('gto-suggestions-list'),
+            gtoConceptsList: document.getElementById('gto-concepts-list'),
+            showGtoBtn: document.getElementById('show-gto-btn')
         };
+        
+        // 当前回合结果（用于GTO分析）
+        this.currentRoundResult = null;
     }
 
     /**
@@ -161,6 +179,10 @@ class UI {
         this.setupButtonGroup('.chips-btn', 'data-chips');
         this.setupButtonGroup('.blinds-btn', 'data-blinds');
         this.setupButtonGroup('.pers-btn', 'data-personality');
+        this.setupButtonGroup('.rounds-btn', 'data-rounds');
+        
+        // 游戏模式选择
+        this.setupGameModeSelector();
         
         // 小伙伴选择
         this.selectedBuddies = [];
@@ -232,6 +254,15 @@ class UI {
         this.elements.menuBtn.addEventListener('click', () => {
             callbacks.onBackToMenu();
         });
+        
+        // 结算按钮（血流模式）
+        if (this.elements.settleBtn) {
+            this.elements.settleBtn.addEventListener('click', () => {
+                if (callbacks.onSettle) {
+                    callbacks.onSettle();
+                }
+            });
+        }
 
         // 日志折叠
         this.elements.toggleLogBtn.addEventListener('click', () => {
@@ -269,6 +300,336 @@ class UI {
                 }
             }
         });
+        
+        // GTO策略分析按钮事件
+        this.setupGTOEvents(callbacks);
+    }
+    
+    /**
+     * 设置GTO策略分析相关事件
+     */
+    setupGTOEvents(callbacks) {
+        // 策略复盘按钮
+        if (this.elements.showGtoBtn) {
+            this.elements.showGtoBtn.addEventListener('click', () => {
+                this.showGTOAnalysis();
+            });
+        }
+        
+        // GTO面板折叠/展开按钮
+        if (this.elements.gtoToggleBtn) {
+            this.elements.gtoToggleBtn.addEventListener('click', () => {
+                this.toggleGTOPanel();
+            });
+        }
+    }
+    
+    /**
+     * 切换GTO面板展开/折叠状态
+     */
+    toggleGTOPanel() {
+        if (!this.elements.gtoSection) return;
+        
+        const content = this.elements.gtoContent;
+        const isExpanded = content && content.style.display !== 'none';
+        
+        if (isExpanded) {
+            // 收起
+            if (content) content.style.display = 'none';
+            if (this.elements.gtoToggleBtn) {
+                this.elements.gtoToggleBtn.textContent = '展开';
+            }
+        } else {
+            // 展开
+            if (content) content.style.display = 'block';
+            if (this.elements.gtoToggleBtn) {
+                this.elements.gtoToggleBtn.textContent = '收起';
+            }
+        }
+    }
+    
+    /**
+     * 显示GTO策略分析
+     */
+    showGTOAnalysis() {
+        // 检查VIP权限
+        if (typeof vipManager !== 'undefined' && !vipManager.isVIP()) {
+            this.showVIPPrompt();
+            return;
+        }
+        
+        if (!this.currentRoundResult) {
+            console.warn('没有可用的回合数据进行GTO分析');
+            return;
+        }
+        
+        // 检查是否有GTOAnalyzer
+        if (typeof GTOAnalyzer === 'undefined') {
+            console.error('GTOAnalyzer未加载');
+            return;
+        }
+        
+        const analyzer = new GTOAnalyzer();
+        
+        // 准备手牌数据 (确保字段名与GTOAnalyzer期望的一致)
+        const handData = {
+            holeCards: this.currentRoundResult.humanHoleCards || [],
+            communityCards: this.currentRoundResult.communityCards || [],
+            actionHistory: this.currentRoundResult.actionHistory || [],
+            humanPosition: this.currentRoundResult.humanPosition || 'BTN',
+            playerCount: this.currentRoundResult.playerCount || 2,
+            result: this.currentRoundResult,  // 传递完整结果对象
+            pot: this.currentRoundResult.pot || 0
+        };
+        
+        // 获取分析结果
+        const analysis = analyzer.analyzeHand(handData);
+        
+        // 渲染分析结果
+        this.renderGTOAnalysis(analysis);
+        
+        // 显示GTO面板
+        if (this.elements.gtoSection) {
+            this.elements.gtoSection.style.display = 'block';
+            // 显示内容区域
+            if (this.elements.gtoContent) {
+                this.elements.gtoContent.style.display = 'block';
+            }
+            if (this.elements.gtoToggleBtn) {
+                this.elements.gtoToggleBtn.textContent = '收起';
+            }
+        }
+    }
+    
+    /**
+     * 渲染GTO分析结果
+     */
+    renderGTOAnalysis(analysis) {
+        if (!analysis) return;
+        
+        // 渲染评分
+        if (this.elements.gtoRatingFill && this.elements.gtoRatingScore) {
+            const rating = analysis.rating || 0;
+            this.elements.gtoRatingFill.style.width = `${rating}%`;
+            this.elements.gtoRatingScore.textContent = `${rating}分`;
+            
+            // 根据评分设置颜色
+            let ratingColor = '#4CAF50'; // 绿色 - 好
+            if (rating < 40) {
+                ratingColor = '#f44336'; // 红色 - 差
+            } else if (rating < 70) {
+                ratingColor = '#ff9800'; // 橙色 - 一般
+            }
+            this.elements.gtoRatingFill.style.background = `linear-gradient(90deg, ${ratingColor}, ${ratingColor}dd)`;
+        }
+        
+        // 渲染总结
+        if (this.elements.gtoSummaryText) {
+            this.elements.gtoSummaryText.textContent = analysis.summary || '暂无分析总结';
+        }
+        
+        // 渲染关键时刻
+        if (this.elements.gtoMomentsList) {
+            this.elements.gtoMomentsList.innerHTML = '';
+            const moments = analysis.keyMoments || [];
+            
+            if (moments.length === 0) {
+                this.elements.gtoMomentsList.innerHTML = '<div class="gto-empty">本局没有关键决策点</div>';
+            } else {
+                moments.forEach(moment => {
+                    const div = document.createElement('div');
+                    // 根据isOptimal判断评价
+                    const evaluation = moment.isOptimal === false ? 'bad' : (moment.isOptimal === true ? 'good' : 'neutral');
+                    div.className = `gto-moment-item ${evaluation}`;
+                    // 使用analysis作为描述，或者回退到description
+                    const description = moment.analysis || moment.description || moment.title || '';
+                    const phaseDisplay = moment.title || this.getPhaseNameCN(moment.phase) || moment.phase || '';
+                    div.innerHTML = `
+                        <div class="moment-header">
+                            <span class="moment-icon">${moment.icon || '📍'}</span>
+                            <span class="moment-phase">${phaseDisplay}</span>
+                            <span class="moment-eval">${this.getEvaluationEmoji(evaluation)}</span>
+                        </div>
+                        <div class="moment-content">${description}</div>
+                        ${moment.suggestion ? `<div class="moment-suggestion">💡 ${moment.suggestion}</div>` : ''}
+                    `;
+                    this.elements.gtoMomentsList.appendChild(div);
+                });
+            }
+        }
+        
+        // 渲染建议
+        if (this.elements.gtoSuggestionsList) {
+            this.elements.gtoSuggestionsList.innerHTML = '';
+            const suggestions = analysis.suggestions || [];
+            
+            if (suggestions.length === 0) {
+                this.elements.gtoSuggestionsList.innerHTML = '<div class="gto-empty">表现完美，继续保持！🎉</div>';
+            } else {
+                suggestions.forEach(suggestion => {
+                    const div = document.createElement('div');
+                    div.className = 'gto-suggestion-item';
+                    div.innerHTML = `<span class="suggestion-icon">💡</span> <span class="suggestion-text">${suggestion}</span>`;
+                    this.elements.gtoSuggestionsList.appendChild(div);
+                });
+            }
+        }
+        
+        // 渲染GTO概念
+        if (this.elements.gtoConceptsList) {
+            this.elements.gtoConceptsList.innerHTML = '';
+            const concepts = analysis.concepts || [];
+            
+            concepts.forEach(concept => {
+                const div = document.createElement('div');
+                div.className = 'gto-concept-card';
+                div.innerHTML = `
+                    <div class="concept-header">
+                        <span class="concept-icon">📖</span>
+                        <span class="concept-name">${concept.name || ''}</span>
+                    </div>
+                    <div class="concept-desc">${concept.description || ''}</div>
+                    ${concept.example ? `<div class="concept-example">例: ${concept.example}</div>` : ''}
+                `;
+                this.elements.gtoConceptsList.appendChild(div);
+            });
+        }
+    }
+    
+    /**
+     * 获取评价对应的emoji
+     */
+    getEvaluationEmoji(evaluation) {
+        switch (evaluation) {
+            case 'good': return '✅';
+            case 'bad': return '❌';
+            case 'neutral': return '➖';
+            case 'excellent': return '🌟';
+            default: return '•';
+        }
+    }
+    
+    /**
+     * 获取阶段的中文名称
+     */
+    getPhaseNameCN(phase) {
+        const phaseNames = {
+            'preflop': '翻牌前',
+            'flop': '翻牌',
+            'turn': '转牌',
+            'river': '河牌',
+            'showdown': '摊牌'
+        };
+        return phaseNames[phase] || phase || '';
+    }
+    
+    /**
+     * 显示VIP提示弹窗
+     */
+    showVIPPrompt() {
+        // 检查是否已存在VIP弹窗
+        let vipModal = document.getElementById('vip-prompt-modal');
+        if (!vipModal) {
+            // 创建VIP提示弹窗
+            vipModal = document.createElement('div');
+            vipModal.id = 'vip-prompt-modal';
+            vipModal.className = 'modal vip-modal';
+            
+            const privileges = typeof vipManager !== 'undefined' ? vipManager.getVIPPrivileges() : [];
+            const privilegesHTML = privileges.map(p => `
+                <div class="vip-privilege-item">
+                    <span class="privilege-icon">${p.icon}</span>
+                    <div class="privilege-info">
+                        <div class="privilege-name">${p.name}</div>
+                        <div class="privilege-desc">${p.description}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            vipModal.innerHTML = `
+                <div class="modal-content vip-prompt-content">
+                    <span class="close-btn vip-close-btn">&times;</span>
+                    <div class="vip-header">
+                        <span class="vip-crown">👑</span>
+                        <h2>VIP会员专属功能</h2>
+                    </div>
+                    <div class="vip-body">
+                        <p class="vip-intro">GTO策略分析是VIP会员专属功能，升级VIP解锁更多高级功能：</p>
+                        <div class="vip-privileges">
+                            ${privilegesHTML}
+                        </div>
+                    </div>
+                    <div class="vip-actions">
+                        <button class="vip-activate-btn" id="vip-activate-btn">
+                            <span>🎁 激活VIP (测试用)</span>
+                        </button>
+                        <button class="vip-close-action-btn" id="vip-close-action-btn">
+                            <span>稍后再说</span>
+                        </button>
+                    </div>
+                    <div class="vip-footer">
+                        <p class="vip-tip">💡 提示：测试模式下可免费体验VIP功能</p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(vipModal);
+            
+            // 绑定关闭事件
+            vipModal.querySelector('.vip-close-btn').addEventListener('click', () => {
+                vipModal.classList.remove('active');
+            });
+            
+            vipModal.querySelector('#vip-close-action-btn').addEventListener('click', () => {
+                vipModal.classList.remove('active');
+            });
+            
+            // 点击背景关闭
+            vipModal.addEventListener('click', (e) => {
+                if (e.target === vipModal) {
+                    vipModal.classList.remove('active');
+                }
+            });
+            
+            // 绑定激活VIP事件
+            vipModal.querySelector('#vip-activate-btn').addEventListener('click', () => {
+                if (typeof vipManager !== 'undefined') {
+                    vipManager.activateVIP(7); // 激活7天VIP
+                    vipModal.classList.remove('active');
+                    // 显示成功提示
+                    this.showVIPActivatedToast();
+                    // 自动打开GTO分析
+                    setTimeout(() => {
+                        this.showGTOAnalysis();
+                    }, 500);
+                }
+            });
+        }
+        
+        // 显示弹窗
+        vipModal.classList.add('active');
+    }
+    
+    /**
+     * 显示VIP激活成功提示
+     */
+    showVIPActivatedToast() {
+        const toast = document.createElement('div');
+        toast.className = 'vip-toast';
+        toast.innerHTML = `
+            <span class="toast-icon">🎉</span>
+            <span class="toast-text">恭喜！VIP已激活，有效期7天</span>
+        `;
+        document.body.appendChild(toast);
+        
+        // 动画显示
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        // 3秒后自动消失
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     /**
@@ -296,6 +657,12 @@ class UI {
         const blindsStr = document.querySelector('.blinds-btn.active')?.dataset.blinds || '10/20';
         const [smallBlind, bigBlind] = blindsStr.split('/').map(Number);
         const aiPersonality = document.querySelector('.pers-btn.active')?.dataset.personality || AI_PERSONALITY.BALANCED;
+        
+        // 游戏模式设置
+        const gameMode = document.querySelector('.mode-btn.active')?.dataset.mode || GAME_MODE.FLOW;
+        const maxRounds = gameMode === GAME_MODE.ROUNDS 
+            ? parseInt(document.querySelector('.rounds-btn.active')?.dataset.rounds) || 10
+            : 0; // 血流模式下设为0表示无限
 
         return {
             difficulty,
@@ -304,8 +671,36 @@ class UI {
             smallBlind,
             bigBlind,
             aiPersonality,
+            gameMode,
+            maxRounds,
             selectedBuddies: this.selectedBuddies || []
         };
+    }
+
+    /**
+     * 设置游戏模式选择器
+     */
+    setupGameModeSelector() {
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        const roundsSetting = document.getElementById('rounds-setting');
+        
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 更新active状态
+                modeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // 显示/隐藏局数设置
+                const mode = btn.dataset.mode;
+                if (roundsSetting) {
+                    if (mode === 'rounds') {
+                        roundsSetting.style.display = 'block';
+                    } else {
+                        roundsSetting.style.display = 'none';
+                    }
+                }
+            });
+        });
     }
 
     /**
@@ -454,6 +849,16 @@ class UI {
         this.elements.gameScreen.classList.remove('active');
         this.elements.menuScreen.classList.add('active');
         this.elements.gameLog.classList.remove('active');
+    }
+    
+    /**
+     * 设置结算按钮可见性（血流模式显示，计局模式隐藏）
+     * @param {boolean} visible - 是否显示
+     */
+    setSettleButtonVisible(visible) {
+        if (this.elements.settleBtn) {
+            this.elements.settleBtn.style.display = visible ? 'block' : 'none';
+        }
     }
 
     /**
@@ -869,6 +1274,88 @@ class UI {
     }
 
     /**
+     * 显示玩家行动反馈气泡（在NPC旁边显示）
+     * @param {Player} player - 玩家对象
+     * @param {string} action - 行动类型
+     * @param {number} amount - 金额（可选）
+     */
+    showActionFeedback(player, action, amount = 0) {
+        const seat = document.getElementById(`player-seat-${player.id}`);
+        if (!seat) return;
+
+        // 移除旧的行动反馈
+        const oldFeedback = seat.querySelector('.action-feedback-bubble');
+        if (oldFeedback) {
+            oldFeedback.remove();
+        }
+
+        // 创建行动反馈气泡
+        const feedback = document.createElement('div');
+        feedback.className = 'action-feedback-bubble';
+        
+        // 根据行动类型设置内容和样式
+        let actionText = '';
+        let actionIcon = '';
+        let colorClass = '';
+        
+        switch (action) {
+            case ACTIONS.FOLD:
+                actionText = '弃牌';
+                actionIcon = '🃏';
+                colorClass = 'action-fold';
+                break;
+            case ACTIONS.CHECK:
+                actionText = '过牌';
+                actionIcon = '✓';
+                colorClass = 'action-check';
+                break;
+            case ACTIONS.CALL:
+                actionText = amount > 0 ? `跟注 ${this.formatNumber(amount)}` : '跟注';
+                actionIcon = '📥';
+                colorClass = 'action-call';
+                break;
+            case ACTIONS.RAISE:
+                actionText = amount > 0 ? `加注 ${this.formatNumber(amount)}` : '加注';
+                actionIcon = '📈';
+                colorClass = 'action-raise';
+                break;
+            case ACTIONS.ALLIN:
+                actionText = amount > 0 ? `全押 ${this.formatNumber(amount)}` : '全押';
+                actionIcon = '🔥';
+                colorClass = 'action-allin';
+                break;
+            default:
+                actionText = action;
+                actionIcon = '💬';
+                colorClass = '';
+        }
+        
+        feedback.classList.add(colorClass);
+        feedback.innerHTML = `
+            <span class="action-icon">${actionIcon}</span>
+            <span class="action-text">${actionText}</span>
+        `;
+        
+        seat.appendChild(feedback);
+        
+        // 触发动画
+        requestAnimationFrame(() => {
+            feedback.classList.add('show');
+        });
+        
+        // 自动移除反馈气泡
+        setTimeout(() => {
+            feedback.classList.remove('show');
+            feedback.classList.add('hide');
+            setTimeout(() => {
+                if (feedback.parentNode) {
+                    feedback.remove();
+                }
+            }, 300);
+        }, 2500);
+    }
+
+    /**
      * 显示AI思考指示器
      * @param {Player} player - AI玩家
      * @param {boolean} isThinking - 是否正在思考
@@ -1131,6 +1618,16 @@ class UI {
         }
 
         this.elements.resultDetails.innerHTML = detailsHTML;
+        
+        // 保存当前回合结果供GTO分析使用
+        this.currentRoundResult = result;
+        
+        // 隐藏GTO分析面板（用户点击按钮后再显示）
+        if (this.elements.gtoSection) {
+            this.elements.gtoSection.style.display = 'none';
+            this.elements.gtoSection.classList.remove('expanded');
+        }
+        
         this.showModal('resultModal');
     }
 
