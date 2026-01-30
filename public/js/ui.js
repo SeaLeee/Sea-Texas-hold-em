@@ -474,7 +474,22 @@ class UI {
                 suggestions.forEach(suggestion => {
                     const div = document.createElement('div');
                     div.className = 'gto-suggestion-item';
-                    div.innerHTML = `<span class="suggestion-icon">💡</span> <span class="suggestion-text">${suggestion}</span>`;
+                    
+                    // 支持对象格式和字符串格式的建议
+                    const text = typeof suggestion === 'object' ? suggestion.text : suggestion;
+                    const phase = typeof suggestion === 'object' && suggestion.phase ? this.getPhaseNameCN(suggestion.phase) : '';
+                    const priority = typeof suggestion === 'object' ? suggestion.priority : 'medium';
+                    
+                    // 根据优先级选择图标
+                    let icon = '💡';
+                    if (priority === 'high') icon = '⚠️';
+                    else if (priority === 'low') icon = '✨';
+                    
+                    div.innerHTML = `
+                        <span class="suggestion-icon">${icon}</span>
+                        ${phase ? `<span class="suggestion-phase">[${phase}]</span>` : ''}
+                        <span class="suggestion-text">${text || ''}</span>
+                    `;
                     this.elements.gtoSuggestionsList.appendChild(div);
                 });
             }
