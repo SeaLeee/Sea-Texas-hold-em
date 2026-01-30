@@ -12,6 +12,10 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// 服务器实例ID - 用于调试多实例问题
+const SERVER_INSTANCE_ID = Math.random().toString(36).substring(2, 8);
+console.log(`服务器实例ID: ${SERVER_INSTANCE_ID}`);
+
 // 配置 Socket.io - 生产环境需要正确的 CORS 设置
 const io = new Server(server, {
     cors: {
@@ -87,6 +91,21 @@ app.get('/api/rooms', (req, res) => {
         .filter(room => room.status === ROOM_STATUS.WAITING)
         .map(room => room.getPublicInfo());
     res.json(roomList);
+});
+
+// API路由 - 获取服务器状态（用于调试）
+app.get('/api/status', (req, res) => {
+    res.json({
+        serverId: SERVER_INSTANCE_ID,
+        timestamp: Date.now(),
+        roomCount: rooms.size,
+        connectedPlayers: playerRooms.size,
+        rooms: Array.from(rooms.values()).map(r => ({
+            id: r.id,
+            name: r.name,
+            playerCount: r.players.size
+        }))
+    });
 });
 
 // 主页路由

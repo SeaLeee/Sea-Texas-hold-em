@@ -135,6 +135,9 @@ class LobbyManager {
                 this.mySocketId = this.socket.id;
                 this.updateConnectionStatus('connected');
                 this.refreshRoomList();
+                
+                // 获取服务器状态用于调试
+                this.fetchServerStatus();
             });
             
             this.socket.on('disconnect', () => {
@@ -635,6 +638,30 @@ class LobbyManager {
         }
         
         return room;
+    }
+    
+    /**
+     * 获取服务器状态 - 用于调试连接问题
+     */
+    async fetchServerStatus() {
+        try {
+            const response = await fetch('/api/status');
+            const status = await response.json();
+            console.log('服务器状态:', status);
+            
+            // 在连接状态旁边显示服务器ID（调试用）
+            if (this.statusText) {
+                this.statusText.textContent = `已连接 [${status.serverId}]`;
+            }
+            
+            // 在控制台显示详细信息
+            console.log(`服务器实例ID: ${status.serverId}`);
+            console.log(`当前房间数: ${status.roomCount}`);
+            console.log(`连接玩家数: ${status.connectedPlayers}`);
+            console.log(`房间列表:`, status.rooms);
+        } catch (error) {
+            console.error('获取服务器状态失败:', error);
+        }
     }
     
     // 显示消息提示
