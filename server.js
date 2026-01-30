@@ -377,7 +377,10 @@ io.on('connection', (socket) => {
     });
 
     // 发送聊天消息
-    socket.on('chatMessage', (message) => {
+    socket.on('chatMessage', (data) => {
+        // 兼容两种格式：直接字符串或对象 { roomId, message }
+        const messageText = typeof data === 'string' ? data : (data.message || data);
+        
         const roomId = playerRooms.get(socket.id);
         if (!roomId) return;
 
@@ -389,8 +392,9 @@ io.on('connection', (socket) => {
 
         io.to(roomId).emit('chatMessage', {
             playerId: socket.id,
-            playerName: player.name,
-            message: message,
+            sender: player.name,        // 使用 sender 字段与前端一致
+            playerName: player.name,    // 保留 playerName 以兼容
+            message: messageText,       // 确保是字符串
             timestamp: Date.now()
         });
     });
