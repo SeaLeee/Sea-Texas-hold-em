@@ -3285,65 +3285,77 @@ html, body {
         min-height: 56px;
     }
     
-    /* 游戏桌面优化 */
-    .poker-table {
-        width: 98%;
-        height: auto;
-        min-height: 280px;
-        padding: 15px;
+    /* 游戏桌面优化 - 使用更多垂直空间 */
+    .table-area {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 0;
+        padding: 5px;
     }
     
-    /* 玩家位置优化 */
+    .poker-table {
+        width: 100%;
+        height: 100%;
+        min-height: 220px;
+        max-height: 45vh;
+        padding: 10px;
+        border-radius: 50% / 40%;
+        position: relative;
+    }
+    
+    /* 玩家位置优化 - 更紧凑 */
     .player-seat {
-        transform: scale(0.85);
+        transform: scale(0.7);
     }
     
     .player-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 1.1rem;
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
     }
     
     .player-info {
-        padding: 4px 8px;
-        min-width: 70px;
+        padding: 3px 6px;
+        min-width: 60px;
     }
     
     .player-name {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
     
     .player-chips {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
     
     .player-bet {
-        font-size: 0.75rem;
-        padding: 3px 8px;
+        font-size: 0.65rem;
+        padding: 2px 6px;
     }
     
     /* 顶部栏优化 */
     .top-bar {
-        padding: 8px 12px;
-        gap: 8px;
+        padding: 6px 10px;
+        gap: 6px;
     }
     
     .game-info {
-        font-size: 0.8rem;
-        gap: 8px;
+        font-size: 0.75rem;
+        gap: 6px;
     }
     
     .pot-display {
-        padding: 6px 12px;
+        padding: 4px 10px;
     }
     
     .pot-amount {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
     
     /* 操作按钮优化 - 更大的触摸目标 */
     .action-panel {
-        padding: 12px 8px;
+        padding: 10px 8px;
         bottom: 0;
     }
     
@@ -3354,10 +3366,10 @@ html, body {
     }
     
     .action-btn {
-        padding: 14px 16px;
-        min-width: 70px;
-        min-height: 50px;
-        font-size: 0.9rem;
+        padding: 12px 14px;
+        min-width: 65px;
+        min-height: 44px;
+        font-size: 0.85rem;
         flex: 1 1 calc(50% - 6px);
         max-width: calc(50% - 6px);
     }
@@ -3411,13 +3423,66 @@ html, body {
         min-height: 40px;
     }
     
-    /* 日志面板优化 */
+    /* ===== 日志面板 - 移动端可折叠设计 ===== */
     .game-log {
+        position: fixed;
+        right: 8px;
+        top: 55px;
+        width: auto;
+        max-width: 200px;
+        max-height: none;
+        z-index: 200;
+        transition: all 0.3s ease;
+    }
+    
+    /* 日志收起状态 - 只显示小图标 */
+    .game-log.collapsed {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.7);
+    }
+    
+    .game-log.collapsed .log-header {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    
+    .game-log.collapsed .log-header span {
+        display: none;
+    }
+    
+    .game-log.collapsed .toggle-log-btn {
+        width: 100%;
+        height: 100%;
+        font-size: 1.2rem;
+        background: none;
+        border: none;
+    }
+    
+    .game-log.collapsed .toggle-log-btn::before {
+        content: "📜";
+    }
+    
+    .game-log.collapsed .toggle-log-btn {
+        font-size: 0;
+    }
+    
+    .game-log.collapsed .log-content {
+        display: none;
+    }
+    
+    /* 日志展开状态 */
+    .game-log:not(.collapsed) {
         width: 200px;
         max-height: 150px;
-        right: 5px;
-        bottom: 180px;
-        font-size: 0.75rem;
+        border-radius: 8px;
     }
     
     .log-header {
@@ -3427,6 +3492,8 @@ html, body {
     
     .log-content {
         padding: 6px;
+        max-height: 110px;
+        overflow-y: auto;
     }
     
     .log-entry {
@@ -3465,10 +3532,16 @@ html, body {
         padding: 10px;
     }
     
-    /* 公共牌区域优化 */
+    /* 公共牌区域优化 - 更紧凑 */
     .community-cards {
-        gap: 4px;
-        padding: 8px;
+        gap: 3px;
+        padding: 5px;
+    }
+    
+    .community-cards .poker-card,
+    .community-cards .card-placeholder {
+        width: 42px !important;
+        height: 60px !important;
     }
     
     /* 结算弹窗优化 */
@@ -3492,19 +3565,36 @@ html, body {
         min-height: 50px;
     }
     
-    /* "轮到你" 指示器优化 */
+    /* "轮到你" 指示器优化 - 不遮挡按钮 */
     .your-turn-indicator {
-        bottom: 180px;
-        padding: 10px 25px;
+        bottom: auto;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 20px;
+        z-index: 150;
     }
     
     .your-turn-indicator span {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
     
     /* 隐藏不必要的元素 */
     .keyboard-hints {
         display: none;
+    }
+    
+    /* 工具栏按钮 - 移动端调整 */
+    .toolbar-buttons {
+        right: 55px;
+        top: 55px;
+        gap: 5px;
+    }
+    
+    .toolbar-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
     }
 }
 
@@ -3745,20 +3835,20 @@ html, body {
     
     /* 游戏界面 - 顶部栏 */
     .top-bar {
-        padding: 6px 10px;
-        gap: 5px;
+        padding: 5px 8px;
+        gap: 4px;
     }
     
     .round-info {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
     }
     
     .pot-display {
-        padding: 4px 10px;
+        padding: 3px 8px;
     }
     
     .pot-amount {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     
     .toolbar {
@@ -3766,83 +3856,103 @@ html, body {
     }
     
     .toolbar-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 0.9rem;
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
     }
     
-    /* 牌桌 */
+    /* 牌桌 - 最大化利用空间 */
+    .table-area {
+        flex: 1;
+        padding: 3px;
+    }
+    
     .poker-table {
         width: 100%;
-        height: 48vh;
-        min-height: 260px;
+        height: 100%;
+        min-height: 180px;
+        max-height: 42vh;
         margin: 0;
-        border-radius: 100px / 50px;
+        padding: 8px;
+        border-radius: 45% / 35%;
     }
     
     .table-center {
-        transform: translate(-50%, -50%) scale(0.75);
+        transform: translate(-50%, -50%) scale(0.7);
     }
     
-    /* 玩家座位 - 超小屏 */
+    /* 玩家座位 - 超小屏更紧凑 */
     .player-seat {
-        transform: translate(-50%, -50%) scale(0.65);
+        transform: translate(-50%, -50%) scale(0.6);
     }
     
     .player-seat.position-0 {
-        bottom: -18%;
-        transform: translate(-50%, 0) scale(0.7);
+        bottom: -15%;
+        transform: translate(-50%, 0) scale(0.65);
     }
     
     .player-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-        margin-bottom: 4px;
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+        margin-bottom: 3px;
     }
     
     .player-info {
-        padding: 4px 8px;
-        min-width: 65px;
+        padding: 2px 5px;
+        min-width: 55px;
     }
     
     .player-name {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
     }
     
     .player-chips-display {
-        font-size: 0.6rem;
+        font-size: 0.55rem;
+    }
+    
+    /* 公共牌 - 超小尺寸 */
+    .community-cards {
+        gap: 2px;
+        padding: 4px;
+    }
+    
+    .community-cards .poker-card,
+    .community-cards .card-placeholder {
+        width: 36px !important;
+        height: 52px !important;
     }
     
     /* 玩家手牌区 */
     .player-controls {
-        padding: 10px 8px 15px;
+        padding: 8px 6px 12px;
     }
     
     .player-hand {
-        gap: 8px;
-        margin-bottom: 10px;
+        gap: 6px;
+        margin-bottom: 8px;
     }
     
     .player-hand .poker-card {
-        width: 55px;
-        height: 77px;
-        font-size: 0.85rem;
+        width: 50px;
+        height: 70px;
+        font-size: 0.8rem;
     }
     
-    /* 行动按钮 */
+    /* 行动按钮 - 更紧凑 */
     .action-buttons {
-        gap: 6px;
+        gap: 5px;
         flex-wrap: wrap;
         justify-content: center;
     }
     
     .action-btn {
-        padding: 10px 12px;
-        min-width: 70px;
-        font-size: 0.8rem;
-        flex: 1 1 28%;
-        max-width: 90px;
+        padding: 10px 10px;
+        min-width: 60px;
+        min-height: 40px;
+        font-size: 0.75rem;
+        flex: 1 1 30%;
+        max-width: 80px;
     }
     
     .action-btn .btn-key {
@@ -3851,11 +3961,11 @@ html, body {
     
     /* 滑块 */
     .bet-slider-container {
-        padding: 8px;
+        padding: 6px;
     }
     
     .bet-value {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
     
     .raise-slider {
@@ -3863,50 +3973,73 @@ html, body {
     }
     
     .quick-raise-buttons {
-        gap: 4px;
+        gap: 3px;
     }
     
     .quick-raise-btn {
-        padding: 6px 8px;
-        font-size: 0.65rem;
+        padding: 5px 6px;
+        font-size: 0.6rem;
     }
     
-    /* 游戏日志 */
+    /* 日志面板 - 默认折叠 */
     .game-log {
-        width: 180px;
-        max-height: 100px;
         right: 5px;
-        bottom: auto;
-        top: 60px;
-        font-size: 0.65rem;
+        top: 48px;
+    }
+    
+    .game-log.collapsed {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .game-log:not(.collapsed) {
+        width: 170px;
+        max-height: 120px;
     }
     
     .log-entry {
-        padding: 3px 6px;
+        padding: 3px 5px;
+        font-size: 0.65rem;
     }
     
     /* 面板 */
     .odds-panel, .strategy-panel, .stats-panel {
-        width: 90vw;
+        width: 92vw;
         max-width: 280px;
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%);
-        top: 60px;
-        max-height: 50vh;
+        top: 55px;
+        max-height: 45vh;
     }
     
     /* 对话气泡 */
     .player-dialogue {
-        font-size: 0.65rem;
-        padding: 4px 8px;
-        max-width: 100px;
+        font-size: 0.6rem;
+        padding: 3px 6px;
+        max-width: 80px;
     }
     
     /* 行动反馈气泡 */
     .action-feedback-bubble {
-        font-size: 0.7rem;
-        padding: 4px 10px;
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+    
+    /* 轮到你指示器 */
+    .your-turn-indicator {
+        top: 45px;
+        padding: 6px 16px;
+    }
+    
+    .your-turn-indicator span {
+        font-size: 0.8rem;
+    }
+    
+    /* 工具栏 */
+    .toolbar-buttons {
+        right: 48px;
+        top: 48px;
     }
 }
 
@@ -4004,13 +4137,27 @@ html, body {
         display: none;
     }
     
-    /* 日志 */
+    /* 日志 - 可折叠设计 */
     .game-log {
-        width: 200px;
-        max-height: 120px;
         right: 8px;
-        bottom: auto;
-        top: 65px;
+        top: 58px;
+    }
+    
+    .game-log.collapsed {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .game-log:not(.collapsed) {
+        width: 200px;
+        max-height: 130px;
+    }
+    
+    /* 公共牌优化 */
+    .community-cards .poker-card,
+    .community-cards .card-placeholder {
+        width: 46px !important;
+        height: 66px !important;
     }
     
     /* 面板居中 */
@@ -4020,25 +4167,42 @@ html, body {
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%);
-        top: 65px;
+        top: 60px;
         max-height: 55vh;
+    }
+    
+    /* 轮到你指示器 */
+    .your-turn-indicator {
+        top: 55px;
+    }
+    
+    /* 工具栏 */
+    .toolbar-buttons {
+        right: 52px;
+        top: 58px;
     }
 }
 
 /* 大屏手机 (iPhone Plus/Max, 大安卓) */
 @media (min-width: 431px) and (max-width: 480px) {
+    .table-area {
+        flex: 1;
+        padding: 5px;
+    }
+    
     .poker-table {
         width: 100%;
-        height: 52vh;
-        min-height: 300px;
+        height: 100%;
+        min-height: 240px;
+        max-height: 48vh;
     }
     
     .player-seat {
-        transform: translate(-50%, -50%) scale(0.78);
+        transform: translate(-50%, -50%) scale(0.75);
     }
     
     .player-seat.position-0 {
-        transform: translate(-50%, 0) scale(0.8);
+        transform: translate(-50%, 0) scale(0.78);
     }
     
     .player-hand .poker-card {
@@ -4050,9 +4214,21 @@ html, body {
         display: none;
     }
     
+    /* 公共牌 */
+    .community-cards .poker-card,
+    .community-cards .card-placeholder {
+        width: 48px !important;
+        height: 68px !important;
+    }
+    
+    /* 日志 */
     .game-log {
-        top: 70px;
-        bottom: auto;
+        top: 60px;
+    }
+    
+    .game-log:not(.collapsed) {
+        width: 210px;
+        max-height: 140px;
     }
 }
 
@@ -4195,6 +4371,22 @@ html, body {
         font-size: 0.6rem;
     }
     
+    /* 日志 - 横屏折叠 */
+    .game-log {
+        right: 5px;
+        top: 45px;
+    }
+    
+    .game-log.collapsed {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .game-log:not(.collapsed) {
+        width: 160px;
+        max-height: 100px;
+    }
+    
     /* 面板 */
     .odds-panel, .strategy-panel, .stats-panel {
         width: 45vw;
@@ -4212,6 +4404,24 @@ html, body {
         left: auto !important;
         right: 10px !important;
         transform: none;
+    }
+    
+    /* 轮到你指示器 - 横屏位置 */
+    .your-turn-indicator {
+        top: 40px;
+        padding: 5px 14px;
+    }
+    
+    /* 工具栏 */
+    .toolbar-buttons {
+        right: 42px;
+        top: 45px;
+        gap: 3px;
+    }
+    
+    .toolbar-btn {
+        width: 30px;
+        height: 30px;
     }
 }
 

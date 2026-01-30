@@ -264,13 +264,18 @@ class UI {
             });
         }
 
-        // 日志折叠
+        // 日志折叠 - 使用 CSS class 控制
         this.elements.toggleLogBtn.addEventListener('click', () => {
-            const content = this.elements.logContent;
-            const isHidden = content.style.display === 'none';
-            content.style.display = isHidden ? 'block' : 'none';
-            this.elements.toggleLogBtn.textContent = isHidden ? '−' : '+';
+            const gameLog = document.getElementById('game-log');
+            if (gameLog) {
+                gameLog.classList.toggle('collapsed');
+                const isCollapsed = gameLog.classList.contains('collapsed');
+                this.elements.toggleLogBtn.textContent = isCollapsed ? '+' : '−';
+            }
         });
+        
+        // 移动端默认折叠日志
+        this.initMobileLogState();
 
         // 键盘快捷键
         document.addEventListener('keydown', (e) => {
@@ -1730,6 +1735,42 @@ class UI {
      */
     clearLog() {
         this.elements.logContent.innerHTML = '';
+    }
+    
+    /**
+     * 初始化移动端日志状态 - 小屏幕默认折叠
+     */
+    initMobileLogState() {
+        const gameLog = document.getElementById('game-log');
+        if (!gameLog) return;
+        
+        // 检测是否为移动端（屏幕宽度 <= 480px）
+        const isMobile = window.innerWidth <= 480;
+        
+        if (isMobile) {
+            // 移动端默认折叠
+            gameLog.classList.add('collapsed');
+            if (this.elements.toggleLogBtn) {
+                this.elements.toggleLogBtn.textContent = '+';
+            }
+        } else {
+            // 桌面端默认展开
+            gameLog.classList.remove('collapsed');
+            if (this.elements.toggleLogBtn) {
+                this.elements.toggleLogBtn.textContent = '−';
+            }
+        }
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            const nowMobile = window.innerWidth <= 480;
+            if (nowMobile && !gameLog.classList.contains('collapsed')) {
+                gameLog.classList.add('collapsed');
+                if (this.elements.toggleLogBtn) {
+                    this.elements.toggleLogBtn.textContent = '+';
+                }
+            }
+        });
     }
 
     /**
