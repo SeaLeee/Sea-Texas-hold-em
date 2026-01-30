@@ -502,7 +502,28 @@ class AI {
         // 分析对手行为：玩家加注是否可能是诈唬
         const isPlayerBluffing = this.detectPlayerBluff(gameState, factors);
         
-        // 诈唬判断
+        // ★★★ 好牌保护：手牌强度高时绝不轻易弃牌 ★★★
+        // 当手牌强度 > 0.5 (一对以上)，直接进入价值下注/跟注逻辑
+        if (handStrength >= 0.5) {
+            console.log(`[AI ${player.name}] 好牌保护: handStrength=${handStrength.toFixed(2)}, 不会弃牌`);
+            // 强牌时，优先价值下注
+            if (handStrength >= 0.7 && actions[ACTIONS.RAISE]) {
+                const raiseAmount = this.calculateValueBet(actions, factors, gameState, adjustedEquity);
+                return { action: ACTIONS.RAISE, amount: raiseAmount };
+            }
+            // 中强牌：有时加注，有时跟注
+            if (handStrength >= 0.5 && actions[ACTIONS.RAISE] && Math.random() < this.config.aggression * 0.8) {
+                const raiseAmount = this.calculateRaiseAmount(actions, factors, gameState, 0.5);
+                return { action: ACTIONS.RAISE, amount: raiseAmount };
+            }
+            // 默认跟注
+            if (actions[ACTIONS.CALL]) return { action: ACTIONS.CALL };
+            if (actions[ACTIONS.CHECK]) return { action: ACTIONS.CHECK };
+            // 好牌绝不弃牌
+            return { action: ACTIONS.CALL };
+        }
+        
+        // 诈唬判断（只对弱牌有效）
         if (handStrength < 0.25 && this.shouldBluff(factors, gameState)) {
             if (actions[ACTIONS.RAISE]) {
                 const bluffSize = this.calculateBluffSize(actions, pot);
@@ -512,7 +533,7 @@ class AI {
         
         // 弱牌处理 - 大幅降低弃牌率
         // 原来是0.25就弃牌，现在根据性格和玩家行为动态调整
-        const foldThreshold = 0.12 - (foldResistance * 0.06); // 最低0.06，最高0.12
+        const foldThreshold = 0.10 - (foldResistance * 0.05); // 最低0.05，最高0.10
         
         if (adjustedEquity < foldThreshold) {
             // 即使是弱牌，也有一定概率跟注（抓诈唬）
