@@ -609,6 +609,9 @@ class LobbyManager {
         // 初始化在线游戏处理器并传递 Socket 连接
         if (window.onlineGameHandler) {
             window.onlineGameHandler.initSocket(this.socket, this.mySocketId);
+            // ★ 关键修复：直接调用 handleGameStarted 传递游戏数据
+            // 因为 initSocket 之后才注册监听器，此时 gameStarted 事件已经错过
+            window.onlineGameHandler.handleGameStarted(gameData);
         }
     }
     
