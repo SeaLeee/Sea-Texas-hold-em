@@ -1,8 +1,26 @@
-feat: Add intelligent AI system and particle effects  
-  
-- Added AI difficulty levels (Easy/Medium/Hard)  
-- Added AI personality types (Conservative/Balanced/Aggressive/Maniac)  
-- Implemented Chen Formula for hand strength calculation  
-- Added Canvas-based particle system for visual effects  
-- Added win celebration and ALL IN explosion effects  
-- Updated menu UI with personality selector  
+fix: GTO analysis suggestions showing [object Object]
+
+- Fixed renderGTOAnalysis to properly extract text/phase/priority from suggestion objects
+- Added phase badges with different icons based on priority level
+- Added .suggestion-phase CSS styles for better visual presentation
+
+fix: NPC hand protection - prevent folding with strong hands
+
+- Add hand protection mechanism in makePostflopDecision
+- When handStrength >= 0.45, NPC will not fold
+- Strong hands (>=0.7) tend to raise for value
+- Medium strength hands (0.45-0.7) will at least call
+- Fix the issue of NPC folding too easily
+
+feat: Add server debugging tools for Railway multiplayer issues
+
+- Add SERVER_INSTANCE_ID to detect multiple instance deployment
+- Add /api/status endpoint for debugging server state
+- Display server ID in connection status for players to verify same instance
+- Log room count, connected players, and room list in browser console
+
+This helps diagnose if players are connecting to different server instances.fix: chat message showing undefined sender and [object Object]
+
+- Extract messageText from data object in chatMessage handler
+- Add sender field to match frontend expectation
+- Support both string and object formats for backward compatibility

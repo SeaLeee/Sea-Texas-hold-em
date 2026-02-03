@@ -286,12 +286,34 @@ class OnlineGameManager {
      * 处理加注
      */
     handleRaise(player, amount) {
-        const minRaise = this.room.currentBet * 2;
+        // 计算最小加注金额（当前下注的2倍，或者大盲注的2倍，取较大者）
+        const minRaise = Math.max(this.room.currentBet * 2, this.room.bigBlind * 2);
+        
+        // 如果金额为0或者太小，返回错误
+        if (!amount || amount <= 0) {
+            return { success: false, error: '请输入有效的加注金额' };
+        }
+        
+        // 检查是否有玩家All-in，限制最大加注金额
+        const allInLimit = this.getMinAllInAmount();
+        let maxRaise = player.chips + player.currentBet;
+        if (allInLimit < Infinity) {
+            maxRaise = Math.min(maxRaise, allInLimit);
+        }
+        
+        // 如果加注金额小于最小值（且不是全押）
         if (amount < minRaise && amount < player.chips + player.currentBet) {
             return { success: false, error: `加注金额必须至少为${minRaise}` };
         }
 
-        const raiseAmount = Math.min(amount - player.currentBet, player.chips);
+        // 限制加注不能超过All-in玩家的金额（边池规则）
+        const actualAmount = Math.min(amount, maxRaise);
+        const raiseAmount = Math.min(actualAmount - player.currentBet, player.chips);
+        
+        if (raiseAmount <= 0) {
+            return { success: false, error: '加注金额必须大于当前下注' };
+        }
+        
         player.chips -= raiseAmount;
         player.currentBet += raiseAmount;
         this.room.pot += raiseAmount;
@@ -614,6 +636,75 @@ class OnlineGameManager {
         actions.push(ACTIONS.ALLIN);
         
         return actions;
+    }
+
+    /**
+     * 获取最小All-in金额 - 用于边池计算
+     * 当有玩家All-in时，其他玩家的有效筹码不能超过最小All-in金额
+     */
+    getMinAllInAmount() {
+        let minAllIn = Infinity;
+        
+        for (const player of this.room.players.values()) {
+            if (player.status === PLAYER_STATUS.ALLIN) {
+                if (player.currentBet < minAllIn) {
+                    minAllIn = player.currentBet;
+                }
+            }
+        }
+        
+        return minAllIn;
+    }
+
+    /**
+     * 计算边池 - 当有玩家All-in时使用
+     * 返回各个边池及其参与者
+     */
+    calculateSidePots() {
+        const activePlayers = this.getActivePlayers();
+        const allInPlayers = activePlayers
+            .filter(p => p.status === PLAYER_STATUS.ALLIN)
+            .sort((a, b) => a.currentBet - b.currentBet);
+        
+        if (allInPlayers.length === 0) {
+            return [{ amount: this.room.pot, players: activePlayers }];
+        }
+        
+        const sidePots = [];
+        let previousBet = 0;
+        
+        for (const allInPlayer of allInPlayers) {
+            const betLevel = allInPlayer.currentBet;
+            const contributingPlayers = activePlayers.filter(p => p.currentBet >= betLevel);
+            
+            if (contributingPlayers.length > 1) {
+                const potAmount = (betLevel - previousBet) * contributingPlayers.length;
+                if (potAmount > 0) {
+                    sidePots.push({
+                        amount: potAmount,
+                        players: contributingPlayers,
+                        level: betLevel
+                    });
+                }
+            }
+            previousBet = betLevel;
+        }
+        
+        // 主池：所有超过最大All-in的部分
+        const maxAllIn = allInPlayers[allInPlayers.length - 1].currentBet;
+        const remainingPlayers = activePlayers.filter(p => p.currentBet > maxAllIn);
+        if (remainingPlayers.length > 1) {
+            const mainPotAmount = remainingPlayers.reduce((sum, p) => sum + (p.currentBet - maxAllIn), 0);
+            if (mainPotAmount > 0) {
+                sidePots.push({
+                    amount: mainPotAmount,
+                    players: remainingPlayers,
+                    level: 'main'
+                });
+            }
+        }
+        
+        return sidePots.length > 0 ? sidePots : [{ amount: this.room.pot, players: activePlayers }];
     }
 }
 

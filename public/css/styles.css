@@ -4433,7 +4433,15 @@ html, body {
         padding: 14px 18px;
     }
     
-    /* 滑块滑块增大 */
+    /* 滑块增大并确保可滑动 */
+    .raise-slider,
+    .bet-slider {
+        touch-action: pan-x !important;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    
     .raise-slider::-webkit-slider-thumb {
         width: 36px;
         height: 36px;
@@ -4442,6 +4450,16 @@ html, body {
     .raise-slider::-moz-range-thumb {
         width: 36px;
         height: 36px;
+    }
+    
+    /* 滑块容器允许水平滑动 */
+    .bet-slider-container {
+        touch-action: pan-x pan-y;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .slider-wrapper {
+        touch-action: pan-x;
     }
     
     /* 快速下注按钮 */
@@ -4479,6 +4497,27 @@ html, body {
 
 /* 结果弹窗移动端优化 */
 @media (max-width: 480px) {
+    /* 允许游戏界面滚动以显示所有内容 */
+    #game-screen {
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* 确保游戏内容能被滚动到 */
+    .game-container {
+        min-height: auto;
+        height: auto;
+        overflow: visible;
+    }
+    
+    /* 玩家控制区域固定在底部但可滚动 */
+    .player-controls {
+        position: relative;
+        padding-bottom: env(safe-area-inset-bottom, 15px);
+        touch-action: manipulation pan-y;
+    }
+    
     .result-modal {
         width: 95vw;
         max-width: none;

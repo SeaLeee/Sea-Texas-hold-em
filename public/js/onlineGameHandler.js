@@ -14,6 +14,7 @@ class OnlineGameHandler {
         this.isMyTurn = false;
         this.phase = 'preflop';
         this.players = new Map();
+        this.minAllInAmount = Infinity; // 追踪最小All-in金额
         
         // UI 元素引用
         this.elements = {
@@ -29,7 +30,9 @@ class OnlineGameHandler {
             raiseBtn: document.getElementById('raise-btn'),
             allinBtn: document.getElementById('allin-btn'),
             betSlider: document.getElementById('bet-slider'),
-            betAmountInput: document.getElementById('bet-amount-input')
+            betAmountInput: document.getElementById('bet-amount-input'),
+            statPot: document.getElementById('stat-pot'),
+            statToCall: document.getElementById('stat-to-call')
         };
     }
 
@@ -119,22 +122,28 @@ class OnlineGameHandler {
     handleNewHand(data) {
         console.log('新一手牌:', data);
         
+        // 清除上一轮所有历史数据
+        this.resetHandState();
+        
         this.myHoleCards = data.yourCards || [];
         this.pot = data.pot || 0;
         this.currentBet = data.currentBet || 0;
         this.isMyTurn = data.isYourTurn || false;
         this.phase = 'preflop';
         this.communityCards = [];
+        this.minAllInAmount = Infinity;
         
         // 重新解析玩家状态
         this.parseRoomPlayers(data.room);
         
         // 重新渲染
         this.clearCommunityCards();
+        this.clearAllPlayerCards();
         this.renderGameTable();
         this.renderMyHand();
         this.updatePotDisplay();
         this.updatePhaseDisplay();
+        this.updateStatsPanel();
         
         if (data.blinds) {
             this.showBlindInfo(data.blinds);
@@ -148,6 +157,32 @@ class OnlineGameHandler {
         }
         
         this.addGameLog('🃏 新一手牌开始');
+    }
+
+    /**
+     * 重置手牌状态 - 清除所有上一轮的数据
+     */
+    resetHandState() {
+        // 清除所有旧的玩家卡牌显示
+        this.clearAllPlayerCards();
+        
+        // 清除操作指示器
+        document.querySelectorAll('.action-indicator').forEach(el => el.remove());
+        
+        // 关闭结果弹窗
+        const resultModal = document.getElementById('result-modal');
+        if (resultModal) resultModal.classList.remove('active');
+        
+        // 清除轮到你行动指示器
+        this.hideYourTurnIndicator();
+    }
+
+    /**
+     * 清除所有玩家的卡牌显示
+     */
+    clearAllPlayerCards() {
+        document.querySelectorAll('.player-cards').forEach(el => el.remove());
+        document.querySelectorAll('.hand-type').forEach(el => el.remove());
     }
 
     /**
@@ -289,6 +324,11 @@ class OnlineGameHandler {
     handleActionError(data) {
         console.log('操作错误:', data);
         this.showErrorMessage(data.error);
+        
+        // 恢复操作按钮，因为操作失败了
+        this.isMyTurn = true;
+        this.enableActionButtons();
+        this.showYourTurnIndicator();
     }
 
     // ==================== UI 渲染方法 ====================
@@ -891,6 +931,39 @@ class OnlineGameHandler {
         logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
         logContent.appendChild(logEntry);
         logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    /**
+     * 更新统计面板 - 显示底池、跟注金额等信息
+     */
+    updateStatsPanel() {
+        // 更新底池显示
+        if (this.elements.statPot) {
+            this.elements.statPot.textContent = this.pot?.toLocaleString() || '0';
+        }
+        
+        // 更新跟注金额
+        if (this.elements.statToCall) {
+            const myPlayer = this.players.get(this.mySocketId);
+            const toCall = myPlayer ? this.currentBet - (myPlayer.currentBet || 0) : 0;
+            this.elements.statToCall.textContent = Math.max(0, toCall).toLocaleString();
+        }
+    }
+
+    /**
+     * 计算All-in限制 - 根据德州扑克规则
+     * 当有玩家All-in时，其他玩家下注不能超过最小All-in金额
+     */
+    calculateAllInLimit() {
+        let minAllIn = Infinity;
+        
+        for (const player of this.players.values()) {
+            if (player.status === 'allin' && player.currentBet < minAllIn) {
+                minAllIn = player.currentBet;
+            }
+        }
+        
+        return minAllIn;
     }
 }
 
